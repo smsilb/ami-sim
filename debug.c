@@ -32,7 +32,7 @@ int strpcmp(char *shortstring, char *longstring) {
 }
 
 
-int add_breakpoint(struct mips_machine *m, unsigned int addr) {
+int add_breakpoint(struct ami_machine *m, unsigned int addr) {
   static int bpnum = 1;
   struct breakpoint *b = malloc(sizeof(struct breakpoint));
   b->id = bpnum++;
@@ -43,7 +43,7 @@ int add_breakpoint(struct mips_machine *m, unsigned int addr) {
   return b->id;
 }
 
-void del_breakpoint(struct mips_machine *m, unsigned int id) {
+void del_breakpoint(struct ami_machine *m, unsigned int id) {
   struct breakpoint **pprev = &m->breakpoints;
   struct breakpoint *b = *pprev;
   while (b != NULL && b->id != id) {
@@ -59,7 +59,7 @@ void del_breakpoint(struct mips_machine *m, unsigned int id) {
   }
 }
 
-int is_breakpoint(struct mips_machine *m, unsigned int addr) {
+int is_breakpoint(struct ami_machine *m, unsigned int addr) {
   struct breakpoint *b = m->breakpoints;
   while (b != NULL && b->addr != addr)
     b = b->next;
@@ -70,7 +70,7 @@ int is_breakpoint(struct mips_machine *m, unsigned int addr) {
   return 0;
 }
 
-int find_breakpoint(struct mips_machine *m, unsigned int addr) {
+int find_breakpoint(struct ami_machine *m, unsigned int addr) {
   struct breakpoint *b = m->breakpoints;
   while (b != NULL && b->addr != addr)
     b = b->next;
@@ -78,7 +78,7 @@ int find_breakpoint(struct mips_machine *m, unsigned int addr) {
   return b->id;
 }
 
-void skip_breakpoint(struct mips_machine *m) {
+void skip_breakpoint(struct ami_machine *m) {
   unsigned int addr = m->PC;
   struct breakpoint *b = m->breakpoints;
   while (b != NULL && b->addr != addr)
@@ -86,7 +86,7 @@ void skip_breakpoint(struct mips_machine *m) {
   if (b) b->enabled = 0;
 }
 
-void unskip_breakpoints(struct mips_machine *m) {
+void unskip_breakpoints(struct ami_machine *m) {
   struct breakpoint *b = m->breakpoints;
   while (b != NULL) {
     b->enabled = 1;
@@ -94,7 +94,7 @@ void unskip_breakpoints(struct mips_machine *m) {
   }
 }
 
-void dump_breakpoints(struct mips_machine *m) {
+void dump_breakpoints(struct ami_machine *m) {
   struct breakpoint *b = m->breakpoints;
   if (b == NULL) printf("no breakpoints set\n");
   while (b != NULL) {
@@ -131,7 +131,7 @@ void readcmd() {
   }
 }
 
-void interactive_debug(struct mips_machine *m)
+void interactive_debug(struct ami_machine *m)
 {
   rl_initialize();
   rl_bind_key('\t', rl_insert);

@@ -13,7 +13,7 @@
 
 jmp_buf err_handler;
 
-void raise(struct mips_machine *m, char *msg, ...)
+void raise(struct ami_machine *m, char *msg, ...)
 {
   m->R[0] = 0; // insist that $zero stay zero
   va_list ap;
@@ -35,30 +35,48 @@ void raise(struct mips_machine *m, char *msg, ...)
   exit(1);
 }
 
-int _run(struct mips_machine* m, int count)
+int _run(struct ami_machine* m, int count)
 {
   int op;
   for (;;) {
-
-    m->R[0] = 0; // insist that $zero stay zero
-
     if (is_breakpoint(m, m->PC))
       return -RUN_BREAKPOINT;
 
-    int nnPC = m->nPC + 4;
+    m->nPC = m->PC + 1;
 
-    unsigned int inst = mem_read_word(m, m->PC);
+    //unsigned int inst = mem_read_word(m, m->PC);
 
     //need to check that this is an instruction 
     op = m->mem[m->PC].op;
+    printf("Running line %i: - %s\n", m->PC, m->mem[m->PC].instruction);
 
     switch(op) {
-      default:
-		 raise(m, "FAULT: unknown opcode field of instruction\n");
+    case HALT:
+      printf("HALT\n");
+      break;
+    case WRITE:
+      printf("WRITE\n");
+      break;
+    case READB:
+      printf("READB\n");
+      break;
+    case READI:
+      printf("READI\n");
+      break;
+    case JUMP:
+      printf("JUMP\n");
+      break;
+    case MOVRTR:
+      printf("MOVRTR\n");
+      break;
+    case MOVATA:
+      printf("MOVATA\n");
+      break;
+    default:
+      raise(m, "FAULT: unknown opcode field of instruction\n");
     }
 
     m->PC = m->nPC;
-    m->nPC = nnPC;
 
     //ensures only count instructions are executed
     if (count > 0 && --count == 0)
@@ -68,7 +86,7 @@ int _run(struct mips_machine* m, int count)
 }
 
 
-int run(struct mips_machine* m, int count)
+int run(struct ami_machine* m, int count)
 {
   struct timespec tstart, tend;
   int err1 = clock_gettime(CLOCK_MONOTONIC, &tstart);
@@ -91,7 +109,7 @@ int run(struct mips_machine* m, int count)
   return ret;
 }
 
-void show_exit_status(struct mips_machine *m)
+void show_exit_status(struct ami_machine *m)
 {
   /*  if (!m->elapsed) {
     printf("MIPS program exits with status %d (approx. %lld instructions at ?? Hz) \n", m->R[REG_A0], m->tsc);

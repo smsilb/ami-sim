@@ -37,7 +37,7 @@ int main(int ac, char **av)
 {
   char *av0 = *(av++); ac--;
 
-  struct mips_machine *m = create_mips_machine();
+  struct ami_machine *m = create_ami_machine();
 
   m->filename = strdup(*av);
 

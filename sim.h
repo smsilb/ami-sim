@@ -46,7 +46,7 @@ struct stack_entry {
   char *instruction;
   int data;
   unsigned int op, type, argc;
-  struct arguments[];
+  struct argument arguments[3];
 };
 
 #define MAX_SEGMENTS 16
@@ -59,7 +59,7 @@ struct breakpoint {
   struct breakpoint *next;
 };
 
-struct mips_machine {
+struct ami_machine {
   /* debug options */
   int opt_printstack;
   int opt_dumpreg;
@@ -78,41 +78,41 @@ struct mips_machine {
 };
 
 
-struct mips_machine *create_mips_machine(void);
-void allocate_stack(struct mips_machine *m);
-void push_arguments(struct mips_machine *m);
-void free_segments(struct mips_machine *m);
-struct stack_entry *allocate_segment(struct mips_machine *m, unsigned int addr, unsigned int size, char *type);
+struct ami_machine *create_ami_machine(void);
+void allocate_stack(struct ami_machine *m);
+void push_arguments(struct ami_machine *m);
+void free_segments(struct ami_machine *m);
+struct stack_entry *allocate_segment(struct ami_machine *m, unsigned int addr, unsigned int size, char *type);
 
-void dump_segments(struct mips_machine *m);
-void dump_registers(struct mips_machine *m);
-void dump_stack(struct mips_machine *m, int count);
+void dump_segments(struct ami_machine *m);
+void dump_registers(struct ami_machine *m);
+void dump_stack(struct ami_machine *m, int count);
 void dump_disassembly(FILE *out, unsigned int pc, unsigned int inst);
-void dump_mem(struct mips_machine *m, unsigned int addr, int count, int size);
+void dump_mem(struct ami_machine *m, unsigned int addr, int count, int size);
 
-void *_mem_ref(struct mips_machine *m, unsigned int addr, int alignment);
-void *mem_ref(struct mips_machine *m, unsigned int addr, int alignment);
-char *mem_strdup(struct mips_machine *m, unsigned int addr);
-void mem_read(struct mips_machine *m, unsigned int addr, char *buf, int len);
-unsigned int mem_read_word(struct mips_machine *m, unsigned int addr);
-unsigned short mem_read_half(struct mips_machine *m, unsigned int addr);
-unsigned char mem_read_byte(struct mips_machine *m, unsigned int addr);
-void mem_write(struct mips_machine *m, unsigned int addr, char *buf, int len);
-void mem_write_word(struct mips_machine *m, unsigned int addr, unsigned int value);
-void mem_write_half(struct mips_machine *m, unsigned int addr, unsigned short value);
-void mem_write_byte(struct mips_machine *m, unsigned int addr, unsigned char value);
+void *_mem_ref(struct ami_machine *m, unsigned int addr, int alignment);
+void *mem_ref(struct ami_machine *m, unsigned int addr, int alignment);
+char *mem_strdup(struct ami_machine *m, unsigned int addr);
+void mem_read(struct ami_machine *m, unsigned int addr, char *buf, int len);
+unsigned int mem_read_word(struct ami_machine *m, unsigned int addr);
+unsigned short mem_read_half(struct ami_machine *m, unsigned int addr);
+unsigned char mem_read_byte(struct ami_machine *m, unsigned int addr);
+void mem_write(struct ami_machine *m, unsigned int addr, char *buf, int len);
+void mem_write_word(struct ami_machine *m, unsigned int addr, unsigned int value);
+void mem_write_half(struct ami_machine *m, unsigned int addr, unsigned short value);
+void mem_write_byte(struct ami_machine *m, unsigned int addr, unsigned char value);
 
 char *readfile(char *filename);
 
-stack_entry disasm_instr(char *instr);
+struct stack_entry disasm_instr(char *instr);
 
 enum { RUN_OK=0, RUN_BREAK=1, RUN_BREAKPOINT=2, RUN_FAULT=3, RUN_EXIT=4 };
-int run(struct mips_machine* m, int count);
-void show_exit_status(struct mips_machine *m);
-void interactive_debug(struct mips_machine* m);
-int is_breakpoint(struct mips_machine *m, unsigned int addr);
-int dosyscall(struct mips_machine *m);
-void raise(struct mips_machine *m, char *msg, ...) __attribute__ ((noreturn));
+int run(struct ami_machine* m, int count);
+void show_exit_status(struct ami_machine *m);
+void interactive_debug(struct ami_machine* m);
+int is_breakpoint(struct ami_machine *m, unsigned int addr);
+int dosyscall(struct ami_machine *m);
+void raise(struct ami_machine *m, char *msg, ...) __attribute__ ((noreturn));
 extern jmp_buf err_handler;
 
 
