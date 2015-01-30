@@ -141,23 +141,10 @@ void interactive_debug(struct mips_machine *m)
   int err;
 
   printf("Welcome to the MIPS simulator built-in debugger. Type 'help' for a listing of commands.");
-  err = setjmp(err_handler);
   printf("\n");
 
   for (;;) {
 
-    if (m->opt_dumpreg) dump_registers(m);
-    if (m->opt_printstack) dump_stack(m, m->opt_printstack);
-
-    if (err == -RUN_BREAK) {
-      printf("paused due to BREAK instruction\n");
-    } else if (err == -RUN_BREAKPOINT) {
-      int id = find_breakpoint(m, m->PC);
-      printf("paused due to breakpoint %d at address 0x%08x\n", id, m->PC);
-      skip_breakpoint(m);
-    } else if (err == -RUN_EXIT) {
-      show_exit_status(m);
-    }
     err = 0;
 
     readcmd();
