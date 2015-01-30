@@ -133,8 +133,6 @@ void readcmd() {
 
 void interactive_debug(struct mips_machine *m)
 {
-  m->opt_disassemble = 1;
-
   rl_initialize();
   rl_bind_key('\t', rl_insert);
 
@@ -166,18 +164,11 @@ void interactive_debug(struct mips_machine *m)
       printf("Resetting program state\n");
       unskip_breakpoints(m);
       memset(m->R, 0, sizeof(m->R));
-      m->LO = m->HI = m->PC = m->nPC = 0;
-      memset(m->CpCond, 0, sizeof(m->CpCond));
-      memset(m->CCR, 0, sizeof(m->CCR));
-      memset(m->CPR, 0, sizeof(m->CPR));
-      memset(m->FWR, 0, sizeof(m->FWR));
+      m->PC = m->nPC = 0;
       free_segments(m);
-      readelf(m, m->elf_filename);
       allocate_stack(m);
       push_arguments(m);
-      if (m->opt_input != stdin) rewind(m->opt_input);
-      if (m->opt_output != stdout) rewind(m->opt_output);
-
+      
     } else if (!strpcmp(av[0], "breakpoint")) {
       if (ac != 2) {
 	printf("expected an address in hex, but got %d arguments\n", ac-1);
@@ -231,34 +222,8 @@ void interactive_debug(struct mips_machine *m)
 	} else {
 	  m->opt_printstack = 0;
 	}
-      } else if (!strpcmp(av[1], "disassembly")) {
-	m->opt_disassemble = (av[0][0] == 'd');
       } else {
 	printf("don't know how to display '%s'; try help\n", av[1]);
-      }
-    } else if (av[0][0] == 'x' && (av[0][1] == '\0' || av[0][1] == '/')) {
-      int size = 4, count = 1;
-      if (av[0][1] == '/') {
-	switch(av[0][strlen(av[0])-1]) {
-	  case 'b': size = 1; break;
-	  case 'h': size = 2; break;
-	  case 'w': size = 4; break;
-	  default: size = 0; break;
-	}
-	if (size > 0) av[0][strlen(av[0])-1] = '\0';
-	count = atoi(av[0]+2);
-      }
-      if (size <= 0) {
-	printf("expecting 'w', 'h', or 'b' width specifier, but got '%c' instead\n", av[0][strlen(av[0])-1]);
-      } else if (count <= 0) {
-	printf("expecting positive count, but got '%s' instead\n", av[0]+2);
-      } else {
-	unsigned int addr = strtoul(av[1], NULL, 16);
-	if (addr == 0)
-	  printf("expected an address in hex, but got '%s' instead\n", av[1]);
-	else {
-	  dump_mem(m, addr, count, size);
-	}
       }
     } else if (!strpcmp(av[0], "?") || !strpcmp(av[0], "help")) {
       printf(
@@ -273,9 +238,6 @@ void interactive_debug(struct mips_machine *m)
 	  "display <thing>    -- periodically display <thing>, which can be 'stack', 'registers', or 'disassembly'\n"
 	  "                      'stack' takes an optional argument of how many words to display;\n"
 	  "undisplay <thing>  -- don't periodically display <thing> any more\n"
-	  "x/FMT <addr>       -- examine memory: FMT is a count followed by either 'w', 'h', or 'b'\n"
-	  "                      for exmaple, 'x/24w 0x70000000' shows 24 words of memory at address 0x70000000\n"
-	  "                      and 'x/8b 0x70000000' shows 8 bytes of memory at address 0x70000000\n"
 	  "[enter]            -- repeat the last command\n"
 	  "\n"
 	  "Note: All commands can be abbreviated by their first letter or any prefix.\n"

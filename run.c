@@ -21,7 +21,7 @@ void raise(struct mips_machine *m, char *msg, ...)
   vfprintf(stderr, msg, ap);
   va_end(ap);
 
-  unsigned int *inst = _mem_ref(m, m->PC, 4);
+  unsigned int *inst = mem_ref(m, m->PC, 4);
   if (inst) {
     fprintf(stderr, "MIPS processor choked on instruction 0x%08x at pc 0x%08x\n", *inst, m->PC);
     fprintf(stderr, "Instruction was: ");
@@ -37,6 +37,7 @@ void raise(struct mips_machine *m, char *msg, ...)
 
 int _run(struct mips_machine* m, int count)
 {
+  int op;
   for (;;) {
 
     m->R[0] = 0; // insist that $zero stay zero
@@ -44,13 +45,12 @@ int _run(struct mips_machine* m, int count)
     if (is_breakpoint(m, m->PC))
       return -RUN_BREAKPOINT;
 
-    m->tsc++;
-
     int nnPC = m->nPC + 4;
 
     unsigned int inst = mem_read_word(m, m->PC);
 
-    if (m->opt_disassemble) dump_disassembly(stdout, m->PC, inst);
+    //need to check that this is an instruction 
+    op = m->mem[m->PC].op;
 
     switch(op) {
       default:
@@ -86,14 +86,14 @@ int run(struct mips_machine* m, int count)
     tend.tv_sec -= (tstart.tv_sec);
   }
   long long nsec = 1000000000 * (long long)tend.tv_sec + (long long)tend.tv_nsec;
-  m->elapsed += nsec;
+  //m->elapsed += nsec;
 
   return ret;
 }
 
 void show_exit_status(struct mips_machine *m)
 {
-  if (!m->elapsed) {
+  /*  if (!m->elapsed) {
     printf("MIPS program exits with status %d (approx. %lld instructions at ?? Hz) \n", m->R[REG_A0], m->tsc);
   } else {
     long long hz = m->tsc * 1000000000 / m->elapsed;
@@ -109,5 +109,6 @@ void show_exit_status(struct mips_machine *m)
     else 
       printf("MIPS program exits with status %d (approx. %lld instructions in %lld nsec at %lld Hz)\n", m->R[REG_A0], m->tsc, m->elapsed, hz);
   }
+  */
 }
 

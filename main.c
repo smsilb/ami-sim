@@ -39,9 +39,11 @@ int main(int ac, char **av)
 
   struct mips_machine *m = create_mips_machine();
 
-  m->elf_filename = strdup(*av);
-  readelf(m, m->elf_filename);
+  m->filename = strdup(*av);
+
+  printf("Filename: %s\n", m->filename);
   allocate_stack(m);
+  printf("Pushing arguments\n");
   push_arguments(m);
 
   

@@ -12,7 +12,7 @@
 unsigned short gethalf(void *p) { return *(unsigned short *)p; }
 unsigned int getfull(void *p) { return *(unsigned int *)p; }
 
-static void *readfile(char *filename, int *pfilesize)
+char *readfile(char *filename)
 {
   struct stat fileinfo;
   if (stat(filename, &fileinfo) < 0) {
@@ -29,7 +29,7 @@ static void *readfile(char *filename, int *pfilesize)
     perror("Cannot open file"); exit(1);
   }
 
-  void* buf = malloc(filesize);
+  char* buf = malloc(filesize);
   if (!buf) {
     perror("malloc failed"); exit(1);
   }
@@ -40,7 +40,5 @@ static void *readfile(char *filename, int *pfilesize)
 
   fclose(fd);
 
-  *pfilesize = filesize;
   return buf;
 }
-

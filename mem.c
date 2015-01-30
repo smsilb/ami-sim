@@ -12,7 +12,6 @@
 
 void *mem_ref(struct mips_machine *m, unsigned int addr, int alignment) {
   printf("Referencing memory at address: %i\n", addr);
-  return ref;
 }
 
 char *mem_strdup(struct mips_machine *m, unsigned int addr) {
@@ -20,8 +19,7 @@ char *mem_strdup(struct mips_machine *m, unsigned int addr) {
 }
 
 void mem_read(struct mips_machine *m, unsigned int addr, char *buf, int len) {
-  for (int i = 0; i < len; i++) 
-    buf[i] = mem_read_byte(m, addr+i);
+  printf("Reading %i bytes from %i\n", len, addr);
 }
 
 unsigned int mem_read_word(struct mips_machine *m, unsigned int addr) {
@@ -37,8 +35,7 @@ unsigned char mem_read_byte(struct mips_machine *m, unsigned int addr) {
 }
 
 void mem_write(struct mips_machine *m, unsigned int addr, char *buf, int len) {
-    for (int i = 0; i < len; i++) 
-      mem_write_byte(m, addr+i, buf[i]);
+  printf("Writing %i bytes to %i\n", len, addr);
 }
 
 void mem_write_word(struct mips_machine *m, unsigned int addr, unsigned int value) {
@@ -80,8 +77,20 @@ void free_segments(struct mips_machine *m)
 
 void allocate_stack(struct mips_machine *m)
 {
-  int r;
-  printf("allocating stack\n");
+  char *line;
+  int line_count = 0;
+  printf("About to read file\n");
+  char *file = readfile(m->filename);
+  printf("Read file\n");
+
+  line = strtok(file, "\n");
+
+  while (line != NULL) {
+    m->mem[line_count] = disasm_instr(line);
+
+    line = strtok(NULL, "\n");
+    line_count++;
+  }
 }
 
 void push_arguments(struct mips_machine *m)
@@ -93,7 +102,5 @@ void push_arguments(struct mips_machine *m)
 struct mips_machine *create_mips_machine()
 {
   struct mips_machine *m = calloc(sizeof(struct mips_machine), 1);
-  m->opt_input = stdin;
-  m->opt_output = stdout;
   return m;
 }

@@ -31,7 +31,7 @@ enum {
 };
 
 /*
-  Types of stackEntrys
+  Types of stack_entrys
  */
 enum {
   INSTRUCTION, DATA
@@ -39,14 +39,14 @@ enum {
 
 struct argument {
   int number;
-  unsigned int register, adBase, adDisp, type;
+  unsigned int reg, adBase, adDisp, type;
 };
 
-struct stackEntry {
+struct stack_entry {
   char *instruction;
   int data;
-  unsigned int op, type;
-  struct argument arg1, arg2, arg3;
+  unsigned int op, type, argc;
+  struct arguments[];
 };
 
 #define MAX_SEGMENTS 16
@@ -63,19 +63,18 @@ struct mips_machine {
   /* debug options */
   int opt_printstack;
   int opt_dumpreg;
-  char *elf_filename;
+  char *filename;
   int opt_ac;
   char **opt_av;
-  char *opt_dir;
-  FILE *opt_input, *opt_output;
   struct breakpoint *breakpoints;
 
   /* memory state */
-  struct stackEntry mem[STACK_SIZE];
+  struct stack_entry mem[STACK_SIZE];
 
   /* CPU registers */
-  unsigned int *R = (int*) malloc(sizeof(int) * 10), PC, nPC;
-  int reg_count = 10;
+  int *R;
+  unsigned int PC, nPC;
+  int reg_count;
 };
 
 
@@ -83,7 +82,7 @@ struct mips_machine *create_mips_machine(void);
 void allocate_stack(struct mips_machine *m);
 void push_arguments(struct mips_machine *m);
 void free_segments(struct mips_machine *m);
-struct stackEntry *allocate_segment(struct mips_machine *m, unsigned int addr, unsigned int size, char *type);
+struct stack_entry *allocate_segment(struct mips_machine *m, unsigned int addr, unsigned int size, char *type);
 
 void dump_segments(struct mips_machine *m);
 void dump_registers(struct mips_machine *m);
@@ -103,7 +102,9 @@ void mem_write_word(struct mips_machine *m, unsigned int addr, unsigned int valu
 void mem_write_half(struct mips_machine *m, unsigned int addr, unsigned short value);
 void mem_write_byte(struct mips_machine *m, unsigned int addr, unsigned char value);
 
-void readelf(struct mips_machine *m, char *filename);
+char *readfile(char *filename);
+
+stack_entry disasm_instr(char *instr);
 
 enum { RUN_OK=0, RUN_BREAK=1, RUN_BREAKPOINT=2, RUN_FAULT=3, RUN_EXIT=4 };
 int run(struct mips_machine* m, int count);
