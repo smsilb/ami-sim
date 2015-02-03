@@ -24,6 +24,12 @@ enum {
 };
 
 /*
+  Types of address values
+ */
+enum {
+  DISP, REG
+};
+/*
   Types of arguments
  */
 enum {
@@ -37,9 +43,15 @@ enum {
   INSTRUCTION, DATA
 };
 
+struct address{
+  int disp;
+  unsigned int reg, type;
+};
+
 struct argument {
   int number;
-  unsigned int reg, adBase, adDisp, type;
+  unsigned int reg, type;
+  struct address add[3];
 };
 
 struct stack_entry {
