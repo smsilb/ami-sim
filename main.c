@@ -19,7 +19,7 @@ void usage(char *av0, char *msg, ...)
     exit(1);
   }
   fprintf(stderr, 
-      "usage: %s [options] <mips-program> [mips-args]\n"
+      "usage: %s [options] <-program> [-args]\n"
       "options can be:\n"
       "  -d        Use interactive debugger\n"
       "  -k <key>  Randomize stack based on <key> instead of $NETID or $USER environment variable\n"

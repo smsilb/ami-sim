@@ -57,10 +57,11 @@ struct stack_entry disasm_instr(char *instr) {
   case 'p':
     if (!strcmp(token, "pc")) {
       //skip ':=' 
-      /* token = strtok(NULL, " ");
       token = strtok(NULL, " ");
+      
+      token = read_argument(&ret, "if");
 
-      if (token[0] == 'b') {
+      /*if (token[0] == 'b') {
 	ret.arguments[0].adBase = 0;
       } else if (token[0] == 'r') {
 	//copy all but the first character to get
@@ -69,16 +70,7 @@ struct stack_entry disasm_instr(char *instr) {
 	strncpy(register_num, token+1, strlen(token) - 1);
 	ret.arguments[0].adBase = atoi(register_num);
       }
-      
-      token = strtok(NULL, " ");
-      ret.arguments[0].adDisp = 0;
-
-      //this will later need to be changed to handle more than just
-      //numbers
-      while (token != NULL && strcmp(token, "if")) {
-	ret.arguments[0].adDisp += atoi(token);
-	token = strtok(NULL, " ");
-      }
+      */
       
       if (token == NULL) {
 	ret.op = JUMP;
@@ -92,7 +84,9 @@ struct stack_entry disasm_instr(char *instr) {
 	  ret.op = JUMPIF;
 	}
 
-	token = strtok(NULL, " ");
+	token = read_argument(&ret, "");
+
+	/*token = strtok(NULL, " ");
 
 	if (token[1] == 'b') {
 	  ret.arguments[1].adBase = 0;
@@ -109,14 +103,13 @@ struct stack_entry disasm_instr(char *instr) {
 
 	//this will later need to be changed to handle more than just
 	//numbers
-	while (token != NULL && strcmp(token, "if")) {
+	while (token != NULL) {
 	  ret.arguments[1].adDisp += atoi(token);
 	  token = strtok(NULL, " ");
 	}
-	
+	*/
 	ret.argc = 2;
-      }*/
-      ret.op = JUMP;
+      }
       break;
     }
   case 'b':
@@ -130,5 +123,22 @@ struct stack_entry disasm_instr(char *instr) {
     exit(1);
   }
 
+  //regardless of which case it is, they are all instructions
+  ret.data_type = INSTRUCTION;
+
   return ret;
+}
+
+char* read_argument(struct stack_entry *ret, char *next_token) {
+  //may have to change this to NULL if it interferes with strtok in
+  //disasm_instr
+  char *token = strtok(NULL, " ");
+
+  //loop until end of line, or the next token is arrived at
+  while (token != NULL && strcmp(token, next_token)) {
+    //stubbed until full parse is working
+    token = strtok(NULL, " ");
+  }
+
+  return token;
 }

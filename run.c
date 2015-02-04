@@ -48,7 +48,7 @@ int _run(struct ami_machine* m, int count)
 
     //need to check that this is an instruction 
     op = m->mem[m->PC].op;
-    printf("Running line %i: - %s\n", m->PC, m->mem[m->PC].instruction);
+    printf("Running line %i: %s\n", m->PC, m->mem[m->PC].instruction);
 
     switch(op) {
     case HALT:
@@ -65,6 +65,12 @@ int _run(struct ami_machine* m, int count)
       break;
     case JUMP:
       printf("JUMP\n");
+      break;
+    case JUMPIF:
+      printf("JUMPIF\n");
+      break;
+    case JUMPNIF:
+      printf("JUMPNIF\n");
       break;
     case MOVRTR:
       printf("MOVRTR\n");

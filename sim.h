@@ -48,17 +48,17 @@ struct address{
   unsigned int reg, type;
 };
 
-struct argument {
+union argument {
   int number;
-  unsigned int reg, type;
+  unsigned int reg, addc;
   struct address add[3];
 };
 
 struct stack_entry {
   char *instruction;
   int data;
-  unsigned int op, type, argc;
-  struct argument arguments[3];
+  unsigned int op, arg_type, data_type, argc;
+  union argument arguments[3];
 };
 
 #define MAX_SEGMENTS 16
@@ -117,6 +117,7 @@ void mem_write_byte(struct ami_machine *m, unsigned int addr, unsigned char valu
 char *readfile(char *filename);
 
 struct stack_entry disasm_instr(char *instr);
+char *read_argument(struct stack_entry *ret, char *next_token);
 
 enum { RUN_OK=0, RUN_BREAK=1, RUN_BREAKPOINT=2, RUN_FAULT=3, RUN_EXIT=4 };
 int run(struct ami_machine* m, int count);
