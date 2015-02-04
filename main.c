@@ -43,7 +43,6 @@ int main(int ac, char **av)
 
   printf("Filename: %s\n", m->filename);
   allocate_stack(m);
-  printf("Pushing arguments\n");
   push_arguments(m);
 
   

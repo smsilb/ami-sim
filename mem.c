@@ -79,15 +79,12 @@ void allocate_stack(struct ami_machine *m)
 {
   char *line;
   int line_count = 0;
-  printf("About to read file\n");
+
   char *file = readfile(m->filename);
-  printf("Read file\n");
 
   line = strtok(file, "\n");
 
   while (line != NULL) {
-    printf("Read line: %s\n", line);
-    
     m->mem[line_count].instruction = (char*) malloc(strlen(line) + 1);
     strcpy(m->mem[line_count].instruction, line);
 
@@ -98,7 +95,6 @@ void allocate_stack(struct ami_machine *m)
   int i;
   for (i = 0; i < line_count; i++) {
     m->mem[i] = disasm_instr(m->mem[i].instruction);
-    printf("Disassembling instruction: %s\n", m->mem[i].instruction);
   }
 }
 

@@ -27,8 +27,7 @@ struct stack_entry disasm_instr(char *instr) {
   //for printing later
   ret.instruction = (char*) malloc(strlen(instr) + 1);
   strcpy(ret.instruction, instr);
-  strcpy(copy, instr);
-  char *token = strtok(copy, " ");
+  char *token = strtok(instr, " ");
 
 
   
@@ -51,8 +50,22 @@ struct stack_entry disasm_instr(char *instr) {
       ret.op = READB;
     else if (!strcmp(token, "read_integer"))
       ret.op = READI;
-    else 
-      ret.op = MOVRTR;
+    else {
+      //skip ':='
+      token = strtok(NULL, " ");
+      
+      token = strtok(NULL, " ");
+      
+      if (token[0] == 'c')
+	ret.op = LOAD;
+      else if (token[0] == 'r')
+	ret.op = MOVRTR;
+      else if (isdigit(token[0]))
+	ret.op = IDM;
+      else if (token[0] == '-')
+	ret.op = IDMN;
+      break;
+    }
     break;
   case 'p':
     if (!strcmp(token, "pc")) {
@@ -113,10 +126,34 @@ struct stack_entry disasm_instr(char *instr) {
       break;
     }
   case 'b':
-    ret.op = MOVRTR;
+    //skip ':='
+    token = strtok(NULL, " ");
+
+    token = strtok(NULL, " ");
+
+    if (token[0] == 'c')
+      ret.op = LOAD;
+    else if (token[0] == 'r')
+      ret.op = MOVRTR;
+    else if (isdigit(token[0]))
+      ret.op = IDM;
+    else if (token[0] == '-')
+      ret.op = IDMN;
     break;
   case 'c':
-    ret.op = MOVATA;
+    //read in the address
+    read_argument(&ret, ":=");
+
+    token = strtok(NULL, " ");
+
+    if (token[0] == 'c')
+      ret.op = MOVATA;
+    else if (token[0] == 'r')
+      ret.op = STORE;
+    else if (isdigit(token[0]))
+      ret.op = IDM;
+    else if (token[0] == '-')
+      ret.op = IDMN;
     break; 
   default:
     printf("Unrecognized command: %s\n", token);
@@ -130,8 +167,9 @@ struct stack_entry disasm_instr(char *instr) {
 }
 
 char* read_argument(struct stack_entry *ret, char *next_token) {
-  //may have to change this to NULL if it interferes with strtok in
-  //disasm_instr
+  //this function assumes that it is being called from
+  //inside disasm_instruction, and that strtok has been called
+  //on the instruction string
   char *token = strtok(NULL, " ");
 
   //loop until end of line, or the next token is arrived at
