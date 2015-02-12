@@ -138,7 +138,7 @@ void interactive_debug(struct ami_machine *m)
 
   int err;
 
-  printf("Welcome to the MIPS simulator built-in debugger. Type 'help' for a listing of commands.");
+  printf("Welcome to the AMI simulator built-in debugger. Type 'help' for a listing of commands.");
   printf("\n");
 
   for (;;) {
@@ -199,7 +199,7 @@ void interactive_debug(struct ami_machine *m)
       } else if (!strpcmp(av[1], "stack")) {
 	int size = m->opt_printstack ? m->opt_printstack : 64;
 	if (ac > 2) size = atoi(av[2]);
-	if (size <= 0) printf("expected a positive integer, but got '%s' instead\n", av[2]);
+	if (size < 0) printf("expected a positive integer, but got '%s' instead\n", av[2]);
 	else dump_stack(m, size);
       } else if (!strpcmp(av[1], "breakpoints")) {
 	dump_breakpoints(m);
@@ -227,7 +227,7 @@ void interactive_debug(struct ami_machine *m)
       }
     } else if (!strpcmp(av[0], "?") || !strpcmp(av[0], "help")) {
       printf(
-	  "quit               -- quit the MIPS debugger\n"
+	  "quit               -- quit the debugger\n"
 	  "continue           -- continue running the program until exit or breakpoint\n"
 	  "step               -- execute one step of the program\n"
 	  "step <n>           -- execute n steps of the program\n"

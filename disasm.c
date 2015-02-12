@@ -67,6 +67,7 @@ struct stack_entry disasm_instr(struct ami_machine *m, char *instr) {
       ret.arguments[0].reg = atoi(token + 1);
       ret.arguments[0].type = REGISTER;
       ret.argc = 1;
+      printf("Stored register %i\n", ret.arguments[0].reg);
 
       //check if this is setting aside a new register
       //and increase register count
@@ -87,7 +88,7 @@ struct stack_entry disasm_instr(struct ami_machine *m, char *instr) {
 	
 	if (isdigit(token[0])) {
 	  ret.op = IDM;
-	  read_argument(&ret, token, stop_words, 12);
+	  ret.arguments[1].number = -1 * atoi(token);
 	} else {
 	  ret.op = NEG;
 	  read_argument(&ret, strtok(NULL, " "), stop_words, 12);
@@ -177,6 +178,7 @@ struct stack_entry disasm_instr(struct ami_machine *m, char *instr) {
     }
   case 'b':
     ret.arguments[0].type = REGISTER;
+    ret.arguments[0].reg = 0;
     ret.argc = 1;
     //skip ':='
     token = strtok(NULL, " ");

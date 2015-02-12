@@ -32,8 +32,9 @@ int _run(struct ami_machine* m, int count)
     //    if (m->halted)
     //return -RUN_HALTED;
 
-    if (is_breakpoint(m, m->PC))
+    if (is_breakpoint(m, m->PC)) {
       return -RUN_BREAKPOINT;
+    }
 
     m->nPC = m->PC + 1;
 
@@ -60,19 +61,56 @@ int _run(struct ami_machine* m, int count)
       printf("JUMP to %i\n", addr);
       break;
     case JUMPIF:
-      printf("JUMPIF\n");
+      addr = mem_get_addr(m, entry.arguments[0]);
+      if (arg_get_value(m, entry.arguments[1])) {
+	printf("JUMPIF to %i, COND TRUE\n", addr);
+      } else {
+	printf("JUMPIF to %i, COND FALSE\n", addr);
+      }
       break;
     case JUMPNIF:
-      printf("JUMPNIF\n");
+      addr = mem_get_addr(m, entry.arguments[0]);
+      if (arg_get_value(m, entry.arguments[1]) == 0) {
+	printf("JUMPNIF to %i, COND TRUE\n", addr);
+      } else {
+	printf("JUMPNIF to %i, COND FALSE\n", addr);
+      }
       break;
     case MOVE:
-      printf("MOVE\n");
+      if (entry.arguments[0].type == REGISTER) {
+	m->R[entry.arguments[0].reg] = arg_get_value(m, entry.arguments[1]);
+	printf("MOVE, r%i <- %i", 
+	       entry.arguments[0].reg, arg_get_value(m, entry.arguments[1]));
+      } else if (entry.arguments[0].type == ADDRESS) {
+	addr = mem_get_addr(m, entry.arguments[0]);
+	m->mem[addr].data = arg_get_value(m, entry.arguments[1]);
+	printf("MOVE, mem[%i] <- %i\n",
+	       addr, arg_get_value(m, entry.arguments[1]));
+      } else {
+	  raise(m, "Inappropriate destination for move");
+      }
       break;
     case LOAD:
-      printf("LOAD\n");
+      if (entry.arguments[0].type == REGISTER
+	  && entry.arguments[1].type == ADDRESS) {
+	  addr = mem_get_addr(m, entry.arguments[1]);
+	  m->R[entry.arguments[0].reg] = mem_read(m, addr);
+	  printf("LOAD, r%i <- %i\n", 
+		 entry.arguments[1].reg, mem_read(m, addr));
+      } else {
+	  raise(m, "Inappropriate destination for load");
+      }
       break;
     case STORE:
-      printf("STORE\n");
+      if (entry.arguments[0].type == ADDRESS
+	  && entry.arguments[1].type == REGISTER) {
+	  addr = mem_get_addr(m, entry.arguments[0]);
+	  mem_write(m, addr, entry.arguments[1].reg);
+	  printf("STORE, mem[%i] <- %i\n", 
+		 addr, m->R[entry.arguments[1].reg]);
+      } else {
+	  raise(m, "Inappropriate destination for store");
+      }
       break;
     case IDM:
       if (entry.arguments[1].type == NUMBER) {
@@ -82,7 +120,7 @@ int _run(struct ami_machine* m, int count)
 	} else if (entry.arguments[0].type == ADDRESS) {
 	  addr = mem_get_addr(m, entry.arguments[0]);
 	  mem_write(m, addr, entry.arguments[1].number);
-	  printf("IDM, %i <- %i\n", addr, entry.arguments[1].number);
+	  printf("IDM, mem[%i] <- %i\n", addr, entry.arguments[1].number);
 	} else {
 	  raise(m, "Inappropriate destination for immediate data move");
 	}
@@ -144,22 +182,12 @@ int _run(struct ami_machine* m, int count)
 
 int run(struct ami_machine* m, int count)
 {
-  struct timespec tstart, tend;
-  int err1 = clock_gettime(CLOCK_MONOTONIC, &tstart);
   int ret = _run(m, count);
-  int err2 = clock_gettime(CLOCK_MONOTONIC, &tend);
 
-  if (err1 || err2) {
-    perror("clock_gettime");
+
+  if (ret == -RUN_BREAKPOINT) {
+    skip_breakpoint();
   }
-  if (tend.tv_nsec < tstart.tv_nsec) {
-    tend.tv_nsec -= (tstart.tv_nsec - 1000000000);
-    tend.tv_sec -= (tstart.tv_sec + 1);
-  } else {
-    tend.tv_nsec -= (tstart.tv_nsec);
-    tend.tv_sec -= (tstart.tv_sec);
-  }
-  long long nsec = 1000000000 * (long long)tend.tv_sec + (long long)tend.tv_nsec;
   //m->elapsed += nsec;
 
   return ret;

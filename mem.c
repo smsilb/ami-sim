@@ -9,6 +9,16 @@
 
 #include "sim.h"
 
+int arg_get_value(struct ami_machine *m, struct argument arg) {
+  if (arg.type == REGISTER) {
+    return m->R[arg.reg];
+  } else if (arg.type == ADDRESS) {
+    return m->mem[mem_get_addr(m, arg)].data;
+  } else {
+    raise(m, "Non register/address argument supplied");
+  }
+}
+
 int mem_read(struct ami_machine *m, unsigned int addr) {
   if (m->mem[addr].data_type == DATA) {
     return m->mem[addr].data;
@@ -49,13 +59,16 @@ void dump_segments(struct ami_machine *m) {
   printf("dumping segments\n");
 }
 
-void dump_stack(struct ami_machine *m, int count) {
+void dump_stack(struct ami_machine *m, int start) {
   printf("Stack entries:\n");
 
-  int i;
-  for (i = 0; i < m->slots_used; i++) {
+  int i, end = (start + 25 > STACK_SIZE) ? STACK_SIZE : start + 25;
+
+  for (i = start; i < end; i++) {
     if (m->mem[i].data_type == INSTRUCTION) {
       printf("%s\n", m->mem[i].instruction);
+    } else {
+      printf("%i: %i\n", i, m->mem[i].data);
     }
   }
 }
