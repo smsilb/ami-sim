@@ -55,9 +55,15 @@ void dump_segments(struct ami_machine *m) {
   printf("dumping segments\n");
 }
 
-// Print the top N elements of the stack
 void dump_stack(struct ami_machine *m, int count) {
-  printf("dumping stack\n");
+  printf("Stack entries:\n");
+
+  int i;
+  for (i = 0; i < m->slots_used; i++) {
+    if (m->mem[i].data_type == INSTRUCTION) {
+      printf("%s\n", m->mem[i].instruction);
+    }
+  }
 }
 
 void dump_mem(struct ami_machine *m, unsigned int addr, int count, int size) {
@@ -94,9 +100,10 @@ void allocate_stack(struct ami_machine *m)
 
   int i;
   for (i = 0; i < line_count; i++) {
-    printf("Disassembling line %i\n", i);
     m->mem[i] = disasm_instr(m, m->mem[i].instruction);
   }
+
+  m->slots_used = line_count;
 }
 
 void push_arguments(struct ami_machine *m)

@@ -65,7 +65,6 @@ struct stack_entry disasm_instr(struct ami_machine *m, char *instr) {
       //for now, just for filler values
       m->R[ret.arguments[0].reg] = 0;
 
-      printf("count is: %i, this is: %i\n", m->reg_count, ret.arguments[0].reg);
       //check if this is setting aside a new register
       //and increase register count
       if (ret.arguments[0].reg > m->reg_count + 1) {

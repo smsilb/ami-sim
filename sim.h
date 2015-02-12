@@ -87,6 +87,7 @@ struct ami_machine {
 
   /* memory state */
   struct stack_entry mem[STACK_SIZE];
+  unsigned int slots_used;
 
   /* CPU registers */
   int R[MAX_REGISTERS];

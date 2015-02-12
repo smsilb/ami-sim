@@ -65,7 +65,7 @@ int is_breakpoint(struct ami_machine *m, unsigned int addr) {
     b = b->next;
   if (!b) return 0;
   if (b->enabled) return 1;
-  printf("skipping breakpoint at 0x%08x\n", addr);
+  printf("skipping breakpoint at %d\n", addr);
   b->enabled = 1;
   return 0;
 }
@@ -98,7 +98,7 @@ void dump_breakpoints(struct ami_machine *m) {
   struct breakpoint *b = m->breakpoints;
   if (b == NULL) printf("no breakpoints set\n");
   while (b != NULL) {
-    printf("breakpoint %d at address 0x%08x\n", b->id, b->addr);
+    printf("breakpoint %d at address %d\n", b->id, b->addr);
     b = b->next;
   }
 }
@@ -171,14 +171,14 @@ void interactive_debug(struct ami_machine *m)
       
     } else if (!strpcmp(av[0], "breakpoint")) {
       if (ac != 2) {
-	printf("expected an address in hex, but got %d arguments\n", ac-1);
+	printf("expected an address, but got %d arguments\n", ac-1);
       } else {
-	unsigned int addr = strtoul(av[1], NULL, 16);
+	unsigned int addr = atoi(av[1]);
 	if (addr == 0)
-	  printf("expected an address in hex, but got '%s' instead\n", av[1]);
+	  printf("expected an address, but got '%s' instead\n", av[1]);
 	else {
 	  int id = add_breakpoint(m, addr);
-	  printf("set breakpoint %d at address 0x%08x\n", id, addr);
+	  printf("set breakpoint %d at address %d\n", id, addr);
 	}
       }
     } else if (!strpcmp(av[0], "delete")) {
