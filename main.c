@@ -40,6 +40,7 @@ int main(int ac, char **av)
   struct ami_machine *m = create_ami_machine();
 
   m->filename = strdup(*av);
+  m->reg_count = 1;
 
   printf("Filename: %s\n", m->filename);
   allocate_stack(m);

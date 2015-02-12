@@ -149,7 +149,7 @@ void interactive_debug(struct ami_machine *m)
     if (ac == 0)
       continue;
     if (!strpcmp(av[0], "quit") || !strpcmp(av[0], "exit")) {
-      printf("exiting MIPS debugger\n");
+      printf("exiting debugger\n");
       exit(0);
     } else if (!strpcmp(av[0], "continue")) {
       err = run(m, 0);

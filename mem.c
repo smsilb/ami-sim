@@ -94,7 +94,8 @@ void allocate_stack(struct ami_machine *m)
 
   int i;
   for (i = 0; i < line_count; i++) {
-    m->mem[i] = disasm_instr(m->mem[i].instruction);
+    printf("Disassembling line %i\n", i);
+    m->mem[i] = disasm_instr(m, m->mem[i].instruction);
   }
 }
 

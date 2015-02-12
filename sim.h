@@ -8,6 +8,9 @@
 #include <stdio.h>
 #include <setjmp.h>
 
+#define TRUE 1
+#define FALSE 0
+
 /*
   Instruction IDs for:
   Halt, write, read boolean, read integer, jump if condition is true,
@@ -19,8 +22,8 @@
  */
 enum {
   HALT, WRITE, READB, READI, JUMPIF, JUMPNIF, JUMP,
-  MOVRTR, MOVATA, IDM, IDMN, LOAD, STORE,
-  EQ, NEQ, LT, LTE, AND, OR, NOT, ADD, SUB, MULT, DIV, NEG
+  MOVE, IDM, LOAD, STORE, EQ, NEQ, LT, LTE, AND, OR, 
+  NOT, ADD, SUB, MULT, DIV, NEG
 };
 
 /*
@@ -44,25 +47,27 @@ enum {
 };
 
 struct address{
-  int disp;
-  unsigned int reg, type;
+  int value;
+  unsigned int type;
 };
 
-union argument {
+struct argument {
   int number;
-  unsigned int reg, addc;
+  unsigned int reg, addc, type;
   struct address add[3];
 };
 
 struct stack_entry {
   char *instruction;
   int data;
-  unsigned int op, arg_type, data_type, argc;
-  union argument arguments[3];
+  unsigned int op, data_type, argc;
+  struct argument arguments[3];
 };
 
 #define MAX_SEGMENTS 16
+#define MAX_REGISTERS 100
 #define STACK_SIZE 1024
+
 
 struct breakpoint {
   int id;
@@ -84,7 +89,7 @@ struct ami_machine {
   struct stack_entry mem[STACK_SIZE];
 
   /* CPU registers */
-  int *R;
+  int R[MAX_REGISTERS];
   unsigned int PC, nPC;
   int reg_count;
 };
@@ -116,8 +121,9 @@ void mem_write_byte(struct ami_machine *m, unsigned int addr, unsigned char valu
 
 char *readfile(char *filename);
 
-struct stack_entry disasm_instr(char *instr);
-char *read_argument(struct stack_entry *ret, char *next_token);
+struct stack_entry disasm_instr(struct ami_machine *m, char *instr);
+char *read_argument(struct stack_entry *ret, char *token, char *stop_words[], int words);
+void init_stop_words(char *stop_words[]);
 
 enum { RUN_OK=0, RUN_BREAK=1, RUN_BREAKPOINT=2, RUN_FAULT=3, RUN_EXIT=4 };
 int run(struct ami_machine* m, int count);

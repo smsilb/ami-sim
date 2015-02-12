@@ -48,7 +48,7 @@ int _run(struct ami_machine* m, int count)
 
     //need to check that this is an instruction 
     op = m->mem[m->PC].op;
-    printf("Running line %s\n", m->PC, m->mem[m->PC].instruction);
+    printf("Running line %s\n", m->mem[m->PC].instruction);
 
     switch(op) {
     case HALT:
@@ -72,11 +72,8 @@ int _run(struct ami_machine* m, int count)
     case JUMPNIF:
       printf("JUMPNIF\n");
       break;
-    case MOVRTR:
-      printf("MOVRTR\n");
-      break;
-    case MOVATA:
-      printf("MOVATA\n");
+    case MOVE:
+      printf("MOVE\n");
       break;
     case LOAD:
       printf("LOAD\n");
@@ -87,11 +84,44 @@ int _run(struct ami_machine* m, int count)
     case IDM:
       printf("IDM\n");
       break;
-    case IDMN:
-      printf("IDMN\n");
+    case EQ:
+      printf("EQ\n");
+      break;
+    case NEQ:
+      printf("NEQ\n");
+      break;
+    case LT:
+      printf("LT\n");
+      break;
+    case LTE:
+      printf("LTE\n");
+      break;
+    case AND:
+      printf("AND\n");
+      break;
+    case OR:
+      printf("OR\n");
+      break;
+    case NOT:
+      printf("NOT\n");
+      break;
+    case ADD:
+      printf("ADD\n");
+      break;
+    case SUB:
+      printf("SUB\n");
+      break;
+    case MULT:
+      printf("MULT\n");
+      break;
+    case DIV:
+      printf("DIV\n");
+      break;
+    case NEG:
+      printf("NEG\n");
       break;
     default:
-      raise(m, "FAULT: unknown opcode field of instruction\n");
+      printf("Unknown opcode\n");
     }
 
     m->PC = m->nPC;
