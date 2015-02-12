@@ -52,15 +52,19 @@ struct stack_entry disasm_instr(struct ami_machine *m, char *instr) {
       ret.op = HALT;
     break;
   case 'w':
-    if (!strcmp(token, "write"))
+    if (!strcmp(token, "write")) {
       ret.op = WRITE;
+      read_argument(&ret, strtok(NULL, " "), stop_words, 12);
+    }
     break;
   case 'r':
-    if (!strcmp(token, "read_boolean"))
+    if (!strcmp(token, "read_boolean")) {
       ret.op = READB;
-    else if (!strcmp(token, "read_integer"))
+      read_argument(&ret, strtok(NULL, " "), stop_words, 12);
+    } else if (!strcmp(token, "read_integer")) {
       ret.op = READI;
-    else {
+      read_argument(&ret, strtok(NULL, " "), stop_words, 12);
+    } else {
       ret.arguments[0].reg = atoi(token + 1);
       //for now, just for filler values
       m->R[ret.arguments[0].reg] = 0;
@@ -83,14 +87,17 @@ struct stack_entry disasm_instr(struct ami_machine *m, char *instr) {
 	
 	if (isdigit(token[0])) {
 	  ret.op = IDM;
+	  read_argument(&ret, token, stop_words, 12);
 	} else {
 	  ret.op = NEG;
+	  read_argument(&ret, strtok(NULL, " "), stop_words, 12);
 	}
       } else {
 	//Argument arithmetic
 	
 	if (!strcmp(token, "not")) {
 	  ret.op = NOT;
+	  read_argument(&ret, strtok(NULL, " "), stop_words, 12);
 	} else {
 	  /*
 	   * Either ALU arithmetic, Argument arithmetic,
@@ -113,27 +120,30 @@ struct stack_entry disasm_instr(struct ami_machine *m, char *instr) {
 	    } else if (argType == 'r') {
 	      ret.op = MOVE;
 	    }
-	  } else if (!strcmp(token, "=")) {
-	    ret.op = EQ;
-	  } else if (!strcmp(token, "/=")) {
-	    ret.op = NEQ;
-	  } else if (!strcmp(token, "<")) {
-	    ret.op = LT;
-	  } else if (!strcmp(token, "<=")) {
-	    ret.op = LTE;
-	  } else if (!strcmp(token, "and")) {
-	    ret.op = AND;
-	  } else if (!strcmp(token, "or")) {
-	    ret.op = OR;
-	  } else if (!strcmp(token, "+")) {
-	    ret.op = ADD;
-	  } else if (!strcmp(token, "-")) {
-	    ret.op = SUB;
-	  } else if (!strcmp(token, "*")) {
-	    ret.op = MULT;
-	  } else if (!strcmp(token, "/")) {
-	    ret.op = DIV;
-	  } 
+	  } else {
+	    if (!strcmp(token, "=")) {
+	      ret.op = EQ;
+	    } else if (!strcmp(token, "/=")) {
+	      ret.op = NEQ;
+	    } else if (!strcmp(token, "<")) {
+	      ret.op = LT;
+	    } else if (!strcmp(token, "<=")) {
+	      ret.op = LTE;
+	    } else if (!strcmp(token, "and")) {
+	      ret.op = AND;
+	    } else if (!strcmp(token, "or")) {
+	      ret.op = OR;
+	    } else if (!strcmp(token, "+")) {
+	      ret.op = ADD;
+	    } else if (!strcmp(token, "-")) {
+	      ret.op = SUB;
+	    } else if (!strcmp(token, "*")) {
+	      ret.op = MULT;
+	    } else if (!strcmp(token, "/")) {
+	      ret.op = DIV;
+	    } 
+	    read_argument(&ret, strtok(NULL, " "), stop_words, 12);
+	  }
 	}
       }
       break;
@@ -171,14 +181,17 @@ struct stack_entry disasm_instr(struct ami_machine *m, char *instr) {
 
     token = strtok(NULL, " ");
 
-    if (token[0] == 'c')
+    if (token[0] == 'c') {
       ret.op = LOAD;
-    else if (token[0] == 'r')
+    } else if (token[0] == 'r') {
       ret.op = MOVE;
-    else if (isdigit(token[0]))
+    } else if (isdigit(token[0])) {
       ret.op = IDM;
-    else if (token[0] == '-')
+    } else if (token[0] == '-') {
       ret.op = IDM;
+    }
+
+    read_argument(&ret, token, stop_words, 12);
     break;
   case 'c':
     //read in the address
@@ -186,14 +199,16 @@ struct stack_entry disasm_instr(struct ami_machine *m, char *instr) {
 
     token = strtok(NULL, " ");
 
-    if (token[0] == 'c')
+    if (token[0] == 'c') {
       ret.op = MOVE;
-    else if (token[0] == 'r')
+    } else if (token[0] == 'r') {
       ret.op = STORE;
-    else if (isdigit(token[0]))
+    } else if (isdigit(token[0])) {
       ret.op = IDM;
-    else if (token[0] == '-')
+    } else if (token[0] == '-') {
       ret.op = IDM;
+    }
+    read_argument(&ret, token, stop_words, 12);
     break; 
   default:
     printf("Unrecognized command: %s\n", token);
