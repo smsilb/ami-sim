@@ -32,6 +32,7 @@ int mem_get_addr(struct ami_machine *m, struct argument arg) {
 	sum += arg.add[i].value;
       }
     }
+    return sum;
   }
 }
 
@@ -80,6 +81,11 @@ void allocate_stack(struct ami_machine *m)
   int line_count = 0;
 
   char *file = readfile(m->filename);
+  
+  int i;
+  for (i = 0; i < STACK_SIZE; i++) {
+    m->mem[i].data_type = DATA;
+  }
 
   line = strtok(file, "\n");
 
@@ -91,8 +97,8 @@ void allocate_stack(struct ami_machine *m)
     line_count++;
   }
 
-  int i;
   for (i = 0; i < line_count; i++) {
+    printf("Disassembling line %i\n", i);
     m->mem[i] = disasm_instr(m, m->mem[i].instruction);
   }
 

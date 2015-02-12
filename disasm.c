@@ -30,13 +30,12 @@ struct stack_entry disasm_instr(struct ami_machine *m, char *instr) {
   char *stop_words[12];
   char *copy = (char*) malloc(strlen(instr) + 1);
 
-  //copy the instruction into a temp variable to preserve
+  //copy the instruction to preserve
   //for printing later
   ret.instruction = (char*) malloc(strlen(instr) + 1);
   strcpy(ret.instruction, instr);
   char *token = strtok(instr, " ");
   ret.argc = 0;
-  ret.data_type = INSTRUCTION;
 
 
   init_stop_words(stop_words);
@@ -66,8 +65,8 @@ struct stack_entry disasm_instr(struct ami_machine *m, char *instr) {
       read_argument(&ret, strtok(NULL, " "), stop_words, 12);
     } else {
       ret.arguments[0].reg = atoi(token + 1);
-      //for now, just for filler values
-      m->R[ret.arguments[0].reg] = 0;
+      ret.arguments[0].type = REGISTER;
+      ret.argc = 1;
 
       //check if this is setting aside a new register
       //and increase register count
@@ -82,6 +81,7 @@ struct stack_entry disasm_instr(struct ami_machine *m, char *instr) {
       
       if (isdigit(token[0])) {
 	ret.op = IDM;
+	read_argument(&ret, token, stop_words, 12);
       } else if (token[0] == '-') {
 	token = strtok(NULL, " ");
 	
@@ -176,6 +176,8 @@ struct stack_entry disasm_instr(struct ami_machine *m, char *instr) {
       break;
     }
   case 'b':
+    ret.arguments[0].type = REGISTER;
+    ret.argc = 1;
     //skip ':='
     token = strtok(NULL, " ");
 
@@ -192,6 +194,7 @@ struct stack_entry disasm_instr(struct ami_machine *m, char *instr) {
     }
 
     read_argument(&ret, token, stop_words, 12);
+
     break;
   case 'c':
     //read in the address
@@ -263,11 +266,10 @@ char* read_argument(struct stack_entry *ret, char *token, char * stop_words[], i
 	ret->arguments[argNum].add[addc].value = atoi(token);
 	addc += 1;
       }
-
-
       token = strtok(NULL, " ");
     }
-  } else if (token[0] == 'r') {
+    ret->arguments[argNum].addc = addc;
+   } else if (token[0] == 'r') {
     //if this argument is a register, read a number into it
     ret->arguments[argNum].type = REGISTER;
     ret->arguments[argNum].reg = atoi(token + 1);
@@ -275,7 +277,8 @@ char* read_argument(struct stack_entry *ret, char *token, char * stop_words[], i
     ret->arguments[argNum].type = REGISTER;
     ret->arguments[argNum].reg = 0;
   } else if (isdigit(token[0])) {
-    ret->arguments[argNum].number = atoi(token + 1);
+    ret->arguments[argNum].type = NUMBER;
+    ret->arguments[argNum].number = atoi(token);
   } else {
     //raise("Inappropriate argument: %s\n", token);
     printf("Inappropriate argument: %s\n", token);

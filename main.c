@@ -46,7 +46,6 @@ int main(int ac, char **av)
   allocate_stack(m);
   push_arguments(m);
 
-  
   interactive_debug(m);
   
   return 0;

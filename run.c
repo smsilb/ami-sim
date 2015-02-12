@@ -17,9 +17,9 @@ void raise(struct ami_machine *m, char *msg)
 {
   char *inst = m->mem[m->PC].instruction;
   if (inst) {
-    fprintf(stderr, "AMI processor choked on instruction %s", inst);
+    printf("AMI processor choked on instruction %s with message: %s\n", inst, msg);
   } else {
-    fprintf(stderr, "AMI processor choked at illegal pc %d\n", m->PC);
+    printf("AMI processor choked at illegal pc %d with message: %s\n", m->PC, msg);
   }
   exit(1);
 }
@@ -75,8 +75,22 @@ int _run(struct ami_machine* m, int count)
       printf("STORE\n");
       break;
     case IDM:
-      
-      printf("IDM\n");
+      if (entry.arguments[1].type == NUMBER) {
+	if (entry.arguments[0].type == REGISTER) {
+	  m->R[entry.arguments[0].reg] = entry.arguments[1].number;
+	  printf("IDM, r%i <- %i\n", entry.arguments[0].reg, entry.arguments[1].number);
+	} else if (entry.arguments[0].type == ADDRESS) {
+	  addr = mem_get_addr(m, entry.arguments[0]);
+	  mem_write(m, addr, entry.arguments[1].number);
+	  printf("IDM, %i <- %i\n", addr, entry.arguments[1].number);
+	} else {
+	  raise(m, "Inappropriate destination for immediate data move");
+	}
+      } else {
+	printf("%i\n", entry.arguments[0].type);
+	raise(m, "Inappropriate number for immediate data move");
+      }
+
       break;
     case EQ:
       printf("EQ\n");
