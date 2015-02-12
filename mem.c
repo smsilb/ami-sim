@@ -9,47 +9,40 @@
 
 #include "sim.h"
 
-
-void *mem_ref(struct ami_machine *m, unsigned int addr, int alignment) {
-  printf("Referencing memory at address: %i\n", addr);
+int mem_read(struct ami_machine *m, unsigned int addr) {
+  if (m->mem[addr].data_type == DATA) {
+    return m->mem[addr].data;
+  } else {
+    raise(m, "Inappropriate memory access");
+  }
 }
 
-char *mem_strdup(struct ami_machine *m, unsigned int addr) {
-  printf("Duplicating memory at address: %i\n", addr);
+int mem_get_addr(struct ami_machine *m, struct argument arg) {
+  if (arg.type == NUMBER) {
+    return arg.number;
+  } else if (arg.type == REGISTER) {
+    return m->R[arg.reg];
+  } else {
+    int sum = 0, i;
+    
+    for (i = 0; i < arg.addc; i++) {
+      if (arg.add[i].type == REG) {
+	sum += m->R[arg.add[i].value];
+      } else {
+	sum += arg.add[i].value;
+      }
+    }
+  }
 }
 
-void mem_read(struct ami_machine *m, unsigned int addr, char *buf, int len) {
-  printf("Reading %i bytes from %i\n", len, addr);
+void mem_write(struct ami_machine *m, unsigned int addr, int value) {
+  if (m->mem[addr].data_type == INSTRUCTION) {
+    raise(m, "Attempted to overwrite instruction");
+  } else {
+    m->mem[addr].data_type == DATA;
+    m->mem[addr].data = value;
+  }
 }
-
-unsigned int mem_read_word(struct ami_machine *m, unsigned int addr) {
-  return *(unsigned int*)mem_ref(m, addr, 4);
-}
-
-unsigned short mem_read_half(struct ami_machine *m, unsigned int addr) {
-  return *(unsigned short*)mem_ref(m, addr, 2);
-}
-
-unsigned char mem_read_byte(struct ami_machine *m, unsigned int addr) {
-  return *(unsigned char*)mem_ref(m, addr, 1);
-}
-
-void mem_write(struct ami_machine *m, unsigned int addr, char *buf, int len) {
-  printf("Writing %i bytes to %i\n", len, addr);
-}
-
-void mem_write_word(struct ami_machine *m, unsigned int addr, unsigned int value) {
-  *(unsigned int*)mem_ref(m, addr, 4) = value;
-}
-
-void mem_write_half(struct ami_machine *m, unsigned int addr, unsigned short value) {
-  *(unsigned short*)mem_ref(m, addr, 2) = value;
-}
-
-void mem_write_byte(struct ami_machine *m, unsigned int addr, unsigned char value) {
-  *(unsigned char*)mem_ref(m, addr, 1) = value;
-}
-
 
 void dump_segments(struct ami_machine *m) {
   printf("dumping segments\n");

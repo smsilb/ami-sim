@@ -13,46 +13,38 @@
 
 jmp_buf err_handler;
 
-void raise(struct ami_machine *m, char *msg, ...)
+void raise(struct ami_machine *m, char *msg)
 {
-  m->R[0] = 0; // insist that $zero stay zero
-  va_list ap;
-  va_start(ap, msg);
-  vfprintf(stderr, msg, ap);
-  va_end(ap);
-
-  unsigned int *inst = mem_ref(m, m->PC, 4);
+  char *inst = m->mem[m->PC].instruction;
   if (inst) {
-    fprintf(stderr, "MIPS processor choked on instruction 0x%08x at pc 0x%08x\n", *inst, m->PC);
-    fprintf(stderr, "Instruction was: ");
-    dump_disassembly(stderr, m->PC, *inst);
-    longjmp(err_handler, -RUN_FAULT);
-  }
-  else {
-    fprintf(stderr, "MIPS processor choked at illegal pc 0x%08x\n", m->PC);
-    longjmp(err_handler, -RUN_FAULT);
+    fprintf(stderr, "AMI processor choked on instruction %s", inst);
+  } else {
+    fprintf(stderr, "AMI processor choked at illegal pc %d\n", m->PC);
   }
   exit(1);
 }
 
 int _run(struct ami_machine* m, int count)
 {
-  int op;
+  int op, addr;
+  struct stack_entry entry;
   for (;;) {
+    //    if (m->halted)
+    //return -RUN_HALTED;
+
     if (is_breakpoint(m, m->PC))
       return -RUN_BREAKPOINT;
 
     m->nPC = m->PC + 1;
 
-    //unsigned int inst = mem_read_word(m, m->PC);
-
-    //need to check that this is an instruction 
     op = m->mem[m->PC].op;
-    printf("Running line %s\n", m->mem[m->PC].instruction);
+    entry = m->mem[m->PC];
+    printf("Running line %s\n", entry.instruction);
 
     switch(op) {
     case HALT:
       printf("HALT\n");
+      m->halted = 1;
       break;
     case WRITE:
       printf("WRITE\n");
@@ -64,7 +56,8 @@ int _run(struct ami_machine* m, int count)
       printf("READI\n");
       break;
     case JUMP:
-      printf("JUMP\n");
+      addr = mem_get_addr(m, entry.arguments[0]);
+      printf("JUMP to %i\n", addr);
       break;
     case JUMPIF:
       printf("JUMPIF\n");
@@ -82,6 +75,7 @@ int _run(struct ami_machine* m, int count)
       printf("STORE\n");
       break;
     case IDM:
+      
       printf("IDM\n");
       break;
     case EQ:

@@ -85,6 +85,9 @@ struct ami_machine {
   char **opt_av;
   struct breakpoint *breakpoints;
 
+  /* run state */
+  int halted;
+
   /* memory state */
   struct stack_entry mem[STACK_SIZE];
   unsigned int slots_used;
@@ -108,17 +111,9 @@ void dump_stack(struct ami_machine *m, int count);
 void dump_disassembly(FILE *out, unsigned int pc, unsigned int inst);
 void dump_mem(struct ami_machine *m, unsigned int addr, int count, int size);
 
-void *_mem_ref(struct ami_machine *m, unsigned int addr, int alignment);
-void *mem_ref(struct ami_machine *m, unsigned int addr, int alignment);
-char *mem_strdup(struct ami_machine *m, unsigned int addr);
-void mem_read(struct ami_machine *m, unsigned int addr, char *buf, int len);
-unsigned int mem_read_word(struct ami_machine *m, unsigned int addr);
-unsigned short mem_read_half(struct ami_machine *m, unsigned int addr);
-unsigned char mem_read_byte(struct ami_machine *m, unsigned int addr);
-void mem_write(struct ami_machine *m, unsigned int addr, char *buf, int len);
-void mem_write_word(struct ami_machine *m, unsigned int addr, unsigned int value);
-void mem_write_half(struct ami_machine *m, unsigned int addr, unsigned short value);
-void mem_write_byte(struct ami_machine *m, unsigned int addr, unsigned char value);
+int mem_get_addr(struct ami_machine *m, struct argument arg);
+int mem_read(struct ami_machine *m, unsigned int addr);
+void mem_write(struct ami_machine *m, unsigned int addr, int value);
 
 char *readfile(char *filename);
 
@@ -126,13 +121,13 @@ struct stack_entry disasm_instr(struct ami_machine *m, char *instr);
 char *read_argument(struct stack_entry *ret, char *token, char *stop_words[], int words);
 void init_stop_words(char *stop_words[]);
 
-enum { RUN_OK=0, RUN_BREAK=1, RUN_BREAKPOINT=2, RUN_FAULT=3, RUN_EXIT=4 };
+enum { RUN_OK=0, RUN_BREAK=1, RUN_BREAKPOINT=2, RUN_FAULT=3, RUN_EXIT=4, RUN_HALTED=5 };
 int run(struct ami_machine* m, int count);
 void show_exit_status(struct ami_machine *m);
 void interactive_debug(struct ami_machine* m);
 int is_breakpoint(struct ami_machine *m, unsigned int addr);
 int dosyscall(struct ami_machine *m);
-void raise(struct ami_machine *m, char *msg, ...) __attribute__ ((noreturn));
+void raise(struct ami_machine *m, char *msg) __attribute__ ((noreturn));
 extern jmp_buf err_handler;
 
 
