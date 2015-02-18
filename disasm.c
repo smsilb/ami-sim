@@ -83,14 +83,24 @@ struct stack_entry disasm_instr(struct ami_machine *m, char *instr) {
 	ret.op = IDM;
 	read_argument(&ret, token, stop_words, 12);
       } else if (token[0] == '-') {
-	token = strtok(NULL, " ");
+	if (strlen(token) == 1) {
+	  token = strtok(NULL, " ");
 	
-	if (isdigit(token[0])) {
-	  ret.op = IDM;
-	  ret.arguments[1].number = -1 * atoi(token);
+	  if (isdigit(token[0])) {
+	    ret.op = IDM;
+	    ret.arguments[1].number = -1 * atoi(token);
+	  } else {
+	    ret.op = NEG;
+	    read_argument(&ret, token, stop_words, 12);
+	  }
 	} else {
-	  ret.op = NEG;
-	  read_argument(&ret, strtok(NULL, " "), stop_words, 12);
+	  if (isdigit(token[1])) {
+	    ret.op = IDM;
+	    ret.arguments[1].number = -1 * atoi(token);
+	  } else {
+	    ret.op = NEG;
+	    read_argument(&ret, token + 1, stop_words, 12);
+	  }
 	}
       } else {
 	//Argument arithmetic
@@ -109,7 +119,7 @@ struct stack_entry disasm_instr(struct ami_machine *m, char *instr) {
 	  //	  if (argType == 'c') {
 	  token = read_argument(&ret, token, stop_words, 12);
 	    //	  } 
-	  if (argType == 'r') {
+	  if (argType == 'r' || argType == 'b') {
 	    token = strtok(NULL, " ");
 	  }
 	  
@@ -117,7 +127,7 @@ struct stack_entry disasm_instr(struct ami_machine *m, char *instr) {
 	  if (token == NULL) {
 	    if (argType == 'c') {
 	      ret.op = LOAD;
-	    } else if (argType == 'r') {
+	    } else if (argType == 'r' || argType == 'b') {
 	      ret.op = MOVE;
 	    }
 	  } else {
@@ -162,13 +172,14 @@ struct stack_entry disasm_instr(struct ami_machine *m, char *instr) {
 	ret.op = JUMP;
 	ret.argc = 1;
       } else {
+	token = strtok(NULL, " ");
 	if (!strcmp(token, "not")) {
 	  ret.op = JUMPNIF;
+	  token = strtok(NULL, " ");
 	} else {
 	  ret.op = JUMPIF;
 	}
 	
-	token = strtok(NULL, " ");
 	token = read_argument(&ret, token, stop_words, 12);
 
 	ret.argc = 2;
@@ -249,7 +260,6 @@ char* read_argument(struct stack_entry *ret, char *token, char * stop_words[], i
   //this function assumes that it is being called from
   //inside disasm_instruction, and that strtok has been called
   //on the instruction string
-  //    char *token = strtok(NULL, " ");
 
   if (token[0] == 'c' || token[strlen(token) - 1] == ',') {
     ret->arguments[argNum].type = ADDRESS;

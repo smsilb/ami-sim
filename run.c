@@ -97,7 +97,7 @@ int _run(struct ami_machine* m, int count)
     case MOVE:
       if (entry.arguments[0].type == REGISTER) {
 	m->R[entry.arguments[0].reg] = arg_get_value(m, entry.arguments[1]);
-	printf("MOVE, r%i <- %i", 
+	printf("MOVE, r%i <- %i\n", 
 	       entry.arguments[0].reg, arg_get_value(m, entry.arguments[1]));
       } else if (entry.arguments[0].type == ADDRESS) {
 	addr1 = mem_get_addr(m, entry.arguments[0]);
@@ -123,7 +123,7 @@ int _run(struct ami_machine* m, int count)
       if (entry.arguments[0].type == ADDRESS
 	  && entry.arguments[1].type == REGISTER) {
 	  addr1 = mem_get_addr(m, entry.arguments[0]);
-	  mem_write(m, addr1, entry.arguments[1].reg);
+	  mem_write(m, addr1, m->R[entry.arguments[1].reg]);
 	  printf("STORE, mem[%i] <- %i\n", 
 		 addr1, m->R[entry.arguments[1].reg]);
       } else {
