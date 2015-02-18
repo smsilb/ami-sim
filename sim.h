@@ -112,6 +112,7 @@ void dump_disassembly(FILE *out, unsigned int pc, unsigned int inst);
 void dump_mem(struct ami_machine *m, unsigned int addr, int count, int size);
 
 int arg_get_value(struct ami_machine *m, struct argument arg);
+int add_get_value(struct ami_machine *m, struct argument add);
 int mem_get_addr(struct ami_machine *m, struct argument arg);
 int mem_read(struct ami_machine *m, unsigned int addr);
 void mem_write(struct ami_machine *m, unsigned int addr, int value);

@@ -19,6 +19,14 @@ int arg_get_value(struct ami_machine *m, struct argument arg) {
   }
 }
 
+int add_get_value(struct ami_machine *m, struct argument add) {
+  if (add.type == REGISTER) {
+    return m->R[add.reg];
+  } else {
+    return mem_get_addr(m, add);
+  }
+}
+
 int mem_read(struct ami_machine *m, unsigned int addr) {
   if (m->mem[addr].data_type == DATA) {
     return m->mem[addr].data;
@@ -31,7 +39,7 @@ int mem_get_addr(struct ami_machine *m, struct argument arg) {
   if (arg.type == NUMBER) {
     return arg.number;
   } else if (arg.type == REGISTER) {
-    return m->R[arg.reg];
+    return arg.reg;
   } else {
     int sum = 0, i;
     
@@ -42,6 +50,7 @@ int mem_get_addr(struct ami_machine *m, struct argument arg) {
 	sum += arg.add[i].value;
       }
     }
+    printf("Address is: %i, %i\n", sum, m->mem[sum].data);
     return sum;
   }
 }
@@ -111,7 +120,6 @@ void allocate_stack(struct ami_machine *m)
   }
 
   for (i = 0; i < line_count; i++) {
-    printf("Disassembling line %i\n", i);
     m->mem[i] = disasm_instr(m, m->mem[i].instruction);
   }
 

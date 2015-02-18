@@ -67,12 +67,11 @@ struct stack_entry disasm_instr(struct ami_machine *m, char *instr) {
       ret.arguments[0].reg = atoi(token + 1);
       ret.arguments[0].type = REGISTER;
       ret.argc = 1;
-      printf("Stored register %i\n", ret.arguments[0].reg);
 
       //check if this is setting aside a new register
       //and increase register count
-      if (ret.arguments[0].reg > m->reg_count + 1) {
-	m->reg_count = ret.arguments[0].reg;
+      if (ret.arguments[0].reg > m->reg_count) {
+	m->reg_count = ret.arguments[0].reg + 1;
       }
 
       //skip ':='
