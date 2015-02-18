@@ -251,7 +251,7 @@ char* read_argument(struct stack_entry *ret, char *token, char * stop_words[], i
   //on the instruction string
   //    char *token = strtok(NULL, " ");
 
-  if (token[0] == 'c') {
+  if (token[0] == 'c' || token[strlen(token) - 1] == ',') {
     ret->arguments[argNum].type = ADDRESS;
     int addc= 0;
 
@@ -260,6 +260,7 @@ char* read_argument(struct stack_entry *ret, char *token, char * stop_words[], i
       if (token[0] == 'r' || token[0] == 'b') {
 	//this address is a register
 	ret->arguments[argNum].add[addc].type = REG;
+	ret->arguments[argNum].add[addc].value = atoi(token + 1);
 	addc += 1;
       } else if (isdigit(token[0])) {
 	//this address is a displacement

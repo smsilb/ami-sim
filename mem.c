@@ -50,7 +50,6 @@ int mem_get_addr(struct ami_machine *m, struct argument arg) {
 	sum += arg.add[i].value;
       }
     }
-    printf("Address is: %i, %i\n", sum, m->mem[sum].data);
     return sum;
   }
 }
@@ -94,7 +93,10 @@ struct stack_entry *allocate_segment(struct ami_machine *m, unsigned int addr, u
 
 void free_segments(struct ami_machine *m)
 {
-  printf("freeing segments\n");
+  int i;
+  for (i = 0; i < STACK_SIZE; i++) {
+    m->mem[i].data = 0;
+  }
 }
 
 void allocate_stack(struct ami_machine *m)

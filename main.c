@@ -44,7 +44,6 @@ int main(int ac, char **av)
 
   printf("Filename: %s\n", m->filename);
   allocate_stack(m);
-  push_arguments(m);
 
   interactive_debug(m);
   

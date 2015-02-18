@@ -165,9 +165,9 @@ void interactive_debug(struct ami_machine *m)
       unskip_breakpoints(m);
       memset(m->R, 0, sizeof(m->R));
       m->PC = m->nPC = 0;
+      m->halted = 0;
       free_segments(m);
       allocate_stack(m);
-      push_arguments(m);
       
     } else if (!strpcmp(av[0], "breakpoint")) {
       if (ac != 2) {

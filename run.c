@@ -27,10 +27,11 @@ void raise(struct ami_machine *m, char *msg)
 int _run(struct ami_machine* m, int count)
 {
   int op, addr1, addr2;
+  char str[20];
   struct stack_entry entry;
   for (;;) {
-    //    if (m->halted)
-    //return -RUN_HALTED;
+    if (m->halted)
+      return -RUN_HALTED;
 
     if (is_breakpoint(m, m->PC)) {
       return -RUN_BREAKPOINT;
@@ -40,7 +41,7 @@ int _run(struct ami_machine* m, int count)
 
     op = m->mem[m->PC].op;
     entry = m->mem[m->PC];
-    printf("Running line %s\n", entry.instruction);
+    printf("%s\n", entry.instruction);
 
     switch(op) {
     case HALT:
@@ -48,21 +49,37 @@ int _run(struct ami_machine* m, int count)
       m->halted = 1;
       break;
     case WRITE:
-      printf("WRITE\n");
+      printf("WRITE -> %i\n", arg_get_value(m, entry.arguments[0]));
       break;
     case READB:
-      printf("READB\n");
+      if (entry.arguments[0].type == ADDRESS) {
+	addr1 = mem_get_addr(m, entry.arguments[0]);
+	fgets(str, 20, stdin);
+	mem_write(m, addr1, atoi(str) != 0);
+	printf("READB, mem[%i] <- %i\n", addr1, atoi(str) != 0);
+      } else {
+	raise(m, "Non address destination for READB");
+      }
       break;
     case READI:
-      printf("READI\n");
+      if (entry.arguments[0].type == ADDRESS) {
+	addr1 = mem_get_addr(m, entry.arguments[0]);
+	fgets(str, 20, stdin);
+	mem_write(m, addr1, atoi(str));
+	printf("READI, mem[%i] <- %i\n", addr1, atoi(str));
+      } else {
+	raise(m, "Non address destination for READI");
+      }
       break;
     case JUMP:
       addr1 = add_get_value(m, entry.arguments[0]);
+      m->nPC = addr1;
       printf("JUMP to %i\n", addr1);
       break;
     case JUMPIF:
       addr1 = add_get_value(m, entry.arguments[0]);
       if (arg_get_value(m, entry.arguments[1])) {
+	m->nPC = addr1;
 	printf("JUMPIF to %i, COND TRUE\n", addr1);
       } else {
 	printf("JUMPIF to %i, COND FALSE\n", addr1);
@@ -71,6 +88,7 @@ int _run(struct ami_machine* m, int count)
     case JUMPNIF:
       addr1 = add_get_value(m, entry.arguments[0]);
       if (arg_get_value(m, entry.arguments[1]) == 0) {
+	m->nPC = addr1;
 	printf("JUMPNIF to %i, COND TRUE\n", addr1);
       } else {
 	printf("JUMPNIF to %i, COND FALSE\n", addr1);
@@ -279,9 +297,13 @@ int _run(struct ami_machine* m, int count)
     case DIV:
       if (entry.argc == 3 && entry.arguments[0].type == REGISTER) {
 	addr1 = entry.arguments[0].reg;
-	m->R[addr1] = arg_get_value(m, entry.arguments[1]) 
-	  / arg_get_value(m, entry.arguments[2]);
-	printf("DIV, r%i <- %i\n", addr1, m->R[addr1]);
+	if (arg_get_value(m, entry.arguments[2]) == 0) {
+	  raise(m, "Division by zero");
+	} else {
+	  m->R[addr1] = arg_get_value(m, entry.arguments[1]) 
+	    / arg_get_value(m, entry.arguments[2]);
+	  printf("DIV, r%i <- %i\n", addr1, m->R[addr1]);
+	}
       } else { 
 	raise(m, "Non register destination for DIV");
       }
@@ -316,8 +338,9 @@ int run(struct ami_machine* m, int count)
 
   if (ret == -RUN_BREAKPOINT) {
     skip_breakpoint();
+  } else if (ret == -RUN_HALTED) {
+    printf("Program is halted\n");
   }
-  //m->elapsed += nsec;
 
   return ret;
 }
