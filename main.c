@@ -17,6 +17,7 @@ int main(int ac, char **av)
 
   m->filename = strdup(*av);
   m->reg_count = 1;
+  m->opt_printstack = -1;
 
   printf("Filename: %s\n", m->filename);
   allocate_stack(m);

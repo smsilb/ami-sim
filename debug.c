@@ -142,7 +142,13 @@ void interactive_debug(struct ami_machine *m)
   printf("\n");
 
   for (;;) {
-
+    
+    if (m->opt_dumpreg) {
+      dump_registers(m);
+    }
+    if (m->opt_printstack != -1) {
+      dump_stack(m, m->opt_printstack);
+    }
     err = 0;
 
     readcmd();
@@ -220,7 +226,7 @@ void interactive_debug(struct ami_machine *m)
 	  if (size <= 0) printf("expected a positive integer, but got '%s' instead\n", av[2]);
 	  else m->opt_printstack = size;
 	} else {
-	  m->opt_printstack = 0;
+	  m->opt_printstack = -1;
 	}
       } else {
 	printf("don't know how to display '%s'; try help\n", av[1]);

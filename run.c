@@ -52,7 +52,7 @@ int _run(struct ami_machine* m, int count)
       printf("WRITE -> %i\n", arg_get_value(m, entry.arguments[0]));
       break;
     case READB:
-      if (entry.arguments[0].type == ADDRESS) {
+      if (entry.argc == 1) {
 	addr1 = mem_get_addr(m, entry.arguments[0]);
 	fgets(str, 20, stdin);
 	mem_write(m, addr1, atoi(str) != 0);
@@ -62,7 +62,7 @@ int _run(struct ami_machine* m, int count)
       }
       break;
     case READI:
-      if (entry.arguments[0].type == ADDRESS) {
+      if (entry.argc == 1) {
 	addr1 = mem_get_addr(m, entry.arguments[0]);
 	fgets(str, 20, stdin);
 	mem_write(m, addr1, atoi(str));
@@ -109,8 +109,7 @@ int _run(struct ami_machine* m, int count)
       }
       break;
     case LOAD:
-      if (entry.arguments[0].type == REGISTER
-	  && entry.arguments[1].type == ADDRESS) {
+      if (entry.argc == 2) {
 	addr1 = mem_get_addr(m, entry.arguments[1]);
 	m->R[entry.arguments[0].reg] = mem_read(m, addr1);
 	printf("LOAD, r%i <- %i\n", 
@@ -120,8 +119,7 @@ int _run(struct ami_machine* m, int count)
       }
       break;
     case STORE:
-      if (entry.arguments[0].type == ADDRESS
-	  && entry.arguments[1].type == REGISTER) {
+      if (entry.argc == 2) {
 	  addr1 = mem_get_addr(m, entry.arguments[0]);
 	  mem_write(m, addr1, m->R[entry.arguments[1].reg]);
 	  printf("STORE, mem[%i] <- %i\n", 
@@ -149,10 +147,7 @@ int _run(struct ami_machine* m, int count)
 
       break;
     case EQ:
-      if (entry.argc == 3
-	  && entry.arguments[0].type == REGISTER
-	  && entry.arguments[1].type == REGISTER
-	  && entry.arguments[2].type == REGISTER) {
+      if (entry.argc == 3) {
 	addr1 = entry.arguments[0].reg;
 	if (arg_get_value(m, entry.arguments[1]) ==
 	    arg_get_value(m, entry.arguments[2])) {
@@ -167,10 +162,7 @@ int _run(struct ami_machine* m, int count)
       } 
       break;
     case NEQ:
-      if (entry.argc == 3
-	  && entry.arguments[0].type == REGISTER
-	  && entry.arguments[1].type == REGISTER
-	  && entry.arguments[2].type == REGISTER) {
+      if (entry.argc == 3) {
 	addr1 = entry.arguments[0].reg;
 	if (arg_get_value(m, entry.arguments[1]) ==
 	    arg_get_value(m, entry.arguments[2])) {
@@ -185,10 +177,7 @@ int _run(struct ami_machine* m, int count)
       }
       break;
     case LT:
-      if (entry.argc == 3
-	  && entry.arguments[0].type == REGISTER
-	  && entry.arguments[1].type == REGISTER
-	  && entry.arguments[2].type == REGISTER) {
+      if (entry.argc == 3) {
 	addr1 = entry.arguments[0].reg;
 	if (arg_get_value(m, entry.arguments[1]) <
 	    arg_get_value(m, entry.arguments[2])) {
@@ -203,10 +192,7 @@ int _run(struct ami_machine* m, int count)
       }
       break;
     case LTE:
-      if (entry.argc == 3
-	  && entry.arguments[0].type == REGISTER
-	  && entry.arguments[1].type == REGISTER
-	  && entry.arguments[2].type == REGISTER) {
+      if (entry.argc == 3) {
 	addr1 = entry.arguments[0].reg;
 	if (arg_get_value(m, entry.arguments[1]) <=
 	    arg_get_value(m, entry.arguments[2])) {
@@ -221,100 +207,187 @@ int _run(struct ami_machine* m, int count)
       }
       break;
     case AND:
-      if (entry.argc == 3 && entry.arguments[0].type == REGISTER){
-	addr1 = entry.arguments[0].reg;
-	if (arg_get_value(m, entry.arguments[1]) != 0
-	    && arg_get_value(m, entry.arguments[2]) != 0) {
-	  m->R[addr1] = 1;
-	  printf("AND, r%i <- true\n", addr1);
+      if (entry.argc == 3){
+	if (entry.arguments[0].type == REGISTER) {
+	  addr1 = entry.arguments[0].reg;
+	  if (arg_get_value(m, entry.arguments[1]) != 0
+	      && arg_get_value(m, entry.arguments[2]) != 0) {
+	    m->R[addr1] = 1;
+	    printf("AND, r%i <- true\n", addr1);
+	  } else {
+	    m->R[addr1] = 0;
+	    printf("AND, r%i <- false\n", addr1);
+	  } 
+	} else if (entry.arguments[0].type == ADDRESS) {
+	  addr1 = mem_get_addr(m, entry.arguments[0]);
+	  if (arg_get_value(m, entry.arguments[1]) != 0
+	      && arg_get_value(m, entry.arguments[2]) != 0) {
+	    mem_write(m, addr1, 1);
+	    printf("AND, mem[%i] <- true\n", addr1);
+	  } else {
+	    mem_write(m, addr1, 0);
+	    printf("AND, mem[%i] <- false\n", addr1);
+	  } 
 	} else {
-	  m->R[addr1] = 0;
-	  printf("AND, r%i <- false\n", addr1);
-	} 
+	  raise(m, "Inappropriate destination for AND");
+	}
       } else { 
-	raise(m, "Non register destination for AND");
+	raise(m, "Wrong number of arguments for AND");
       }
       break;
     case OR:
-      if (entry.argc == 3 && entry.arguments[0].type == REGISTER){
-	addr1 = entry.arguments[0].reg;
-	if (arg_get_value(m, entry.arguments[1]) != 0
-	    || arg_get_value(m, entry.arguments[2]) != 0) {
-	  m->R[addr1] = 1;
-	  printf("OR, r%i <- true\n", addr1);
+      if (entry.argc == 3){
+	if (entry.arguments[0].type == REGISTER) {
+	  addr1 = entry.arguments[0].reg;
+	  if (arg_get_value(m, entry.arguments[1]) != 0
+	      || arg_get_value(m, entry.arguments[2]) != 0) {
+	    m->R[addr1] = 1;
+	    printf("OR, r%i <- true\n", addr1);
+	  } else {
+	    m->R[addr1] = 0;
+	    printf("OR, r%i <- false\n", addr1);
+	  }
+	} else if (entry.arguments[0].type == ADDRESS) {
+	  addr1 = mem_get_addr(m, entry.arguments[0]);
+	  if (arg_get_value(m, entry.arguments[1]) != 0
+	      || arg_get_value(m, entry.arguments[2]) != 0) {
+	    mem_write(m, addr1, 1);
+	    printf("OR, mem[%i] <- true\n", addr1);
+	  } else {
+	    mem_write(m, addr1, 0);
+	    printf("OR, mem[%i] <- false\n", addr1);
+	  }
 	} else {
-	  m->R[addr1] = 0;
-	  printf("OR, r%i <- false\n", addr1);
+	  raise(m, "Inappropriate destination for OR");
 	}
       } else { 
-	raise(m, "Non register destination for OR");
+	raise(m, "Wrong number of arguments for OR");
       }
       break;
     case NOT:
-      if (entry.argc == 2 && entry.arguments[0].type == REGISTER) {
-	addr1 = entry.arguments[0].reg;
-	if (arg_get_value(m, entry.arguments[1]) == 0) {
-	  m->R[addr1] = 1;
-	  printf("NOT, r%i <- true\n", addr1);
+      if (entry.argc == 2) {
+	if (entry.arguments[0].type == REGISTER) {
+	  addr1 = entry.arguments[0].reg;
+	  if (arg_get_value(m, entry.arguments[1]) == 0) {
+	    m->R[addr1] = 1;
+	    printf("NOT, r%i <- true\n", addr1);
+	  } else {
+	    m->R[addr1] = 0;
+	    printf("NOT, r%i <- false\n", addr1);
+	  }
+	} else if (entry.arguments[0].type == ADDRESS) {
+	  addr1 = mem_get_addr(m, entry.arguments[0]);
+	  if (arg_get_value(m, entry.arguments[1]) == 0) {
+	    mem_write(m, addr1, 1);
+	    printf("NOT, mem[%i] <- true\n", addr1);
+	  } else {
+	    mem_write(m, addr1, 0);
+	    printf("NOT, mem[%i] <- false\n", addr1);
+	  }
 	} else {
-	  m->R[addr1] = 0;
-	  printf("NOT, r%i <- false\n", addr1);
+	  raise(m, "Inappropriate destination for NOT");
 	}
       } else { 
-	raise(m, "Non register destination for NOT");
+	raise(m, "Wrong number of arguments for NOT");
       }
       break;
     case ADD:
-      if (entry.argc == 3 && entry.arguments[0].type == REGISTER) {
-	addr1 = entry.arguments[0].reg;
-	m->R[addr1] = arg_get_value(m, entry.arguments[1]) 
-				       + arg_get_value(m, entry.arguments[2]);
-	printf("ADD, r%i <- %i\n", addr1, m->R[addr1]);
+      if (entry.argc == 3) {
+	if (entry.arguments[0].type == REGISTER) {
+	  addr1 = entry.arguments[0].reg;
+	  m->R[addr1] = arg_get_value(m, entry.arguments[1]) 
+	    + arg_get_value(m, entry.arguments[2]);
+	  printf("ADD, r%i <- %i\n", addr1, m->R[addr1]);
+	} else if (entry.arguments[0].type == ADDRESS) {
+	  addr1 = mem_get_addr(m, entry.arguments[0]);
+	  mem_write(m, addr1, arg_get_value(m, entry.arguments[1]) 
+		    + arg_get_value(m, entry.arguments[2]));
+	  printf("ADD, mem[%i] <- %i\n", addr1, mem_read(m, addr1));
+	} else {
+	  raise(m, "Inappropriate destination for ADD");
+	}
       } else { 
-	raise(m, "Non register destination for ADD");
+	raise(m, "Wrong number of arguments for ADD");
       }
       break;
     case SUB:
-      if (entry.argc == 3 && entry.arguments[0].type == REGISTER) {
-	addr1 = entry.arguments[0].reg;
-	m->R[addr1] = arg_get_value(m, entry.arguments[1]) 
-	  - arg_get_value(m, entry.arguments[2]);
-	printf("SUB, r%i <- %i\n", addr1, m->R[addr1]);
+      if (entry.argc == 3) {
+	if (entry.arguments[0].type == REGISTER) {
+	  addr1 = entry.arguments[0].reg;
+	  m->R[addr1] = arg_get_value(m, entry.arguments[1]) 
+	    - arg_get_value(m, entry.arguments[2]);
+	  printf("SUB, r%i <- %i\n", addr1, m->R[addr1]);
+	} else if (entry.arguments[0].type == ADDRESS) {
+	  addr1 = mem_get_addr(m, entry.arguments[0]);
+	  mem_write(m, addr1, arg_get_value(m, entry.arguments[1]) 
+		    - arg_get_value(m, entry.arguments[2]));
+	  printf("SUB, mem[%i] <- %i\n", addr1, mem_read(m, addr1));
+	} else {
+	  raise(m, "Inappropriate destination for SUB");
+	}
       } else { 
-	raise(m, "Non register destination for SUB");
+	raise(m, "Wrong number of arguments for SUB");
       }
       break;
     case MULT:
-      if (entry.argc == 3 && entry.arguments[0].type == REGISTER) {
-	addr1 = entry.arguments[0].reg;
-	m->R[addr1] = arg_get_value(m, entry.arguments[1]) 
-	  * arg_get_value(m, entry.arguments[2]);
-	printf("MULT, r%i <- %i\n", addr1, m->R[addr1]);
+      if (entry.argc == 3) {
+	if (entry.arguments[0].type == REGISTER) {
+	  addr1 = entry.arguments[0].reg;
+	  m->R[addr1] = arg_get_value(m, entry.arguments[1]) 
+	    * arg_get_value(m, entry.arguments[2]);
+	  printf("MULT, r%i <- %i\n", addr1, m->R[addr1]);
+	} else if (entry.arguments[0].type == ADDRESS) {
+	  addr1 = mem_get_addr(m, entry.arguments[0]);
+	  mem_write(m, addr1, arg_get_value(m, entry.arguments[1]) 
+		    * arg_get_value(m, entry.arguments[2]));
+	  printf("MULT, mem[%i] <- %i\n", addr1, mem_read(m, addr1));
+	} else {
+	  raise(m, "Inappropriate destination for MULT");
+	}
       } else { 
-	raise(m, "Non register destination for MULT");
+	raise(m, "Wrong number of arguments for MULT");
       }
       break;
     case DIV:
-      if (entry.argc == 3 && entry.arguments[0].type == REGISTER) {
-	addr1 = entry.arguments[0].reg;
+      if (entry.argc == 3) {
 	if (arg_get_value(m, entry.arguments[2]) == 0) {
 	  raise(m, "Division by zero");
 	} else {
-	  m->R[addr1] = arg_get_value(m, entry.arguments[1]) 
-	    / arg_get_value(m, entry.arguments[2]);
-	  printf("DIV, r%i <- %i\n", addr1, m->R[addr1]);
+	  if (entry.arguments[0].type == REGISTER) {
+	    addr1 = entry.arguments[0].reg;
+	
+	    m->R[addr1] = arg_get_value(m, entry.arguments[1]) 
+	      / arg_get_value(m, entry.arguments[2]);
+	    printf("DIV, r%i <- %i\n", addr1, m->R[addr1]);
+	  } else if (entry.arguments[0].type == ADDRESS) {
+	    addr1 = mem_get_addr(m, entry.arguments[0]);
+	
+	    mem_write(m, addr1, arg_get_value(m, entry.arguments[1]) 
+		      / arg_get_value(m, entry.arguments[2]));
+	    printf("DIV, mem[%i] <- %i\n", addr1, mem_read(m, addr1));
+	  } else {
+	    raise(m, "Inappropriate destination for DIV");
+	  }
 	}
       } else { 
-	raise(m, "Non register destination for DIV");
+	raise(m, "Wrong number of arguments for DIV");
       }
       break;
     case NEG:
-      if (entry.argc == 2 && entry.arguments[0].type == REGISTER) {
-	addr1 = entry.arguments[0].reg;
-	m->R[addr1] = -1 * arg_get_value(m, entry.arguments[1]);
-	printf("NEG, r%i <- %i\n", addr1, m->R[addr1]);
+      if (entry.argc == 2) {
+	if (entry.arguments[0].type == REGISTER) {
+	  addr1 = entry.arguments[0].reg;
+	  m->R[addr1] = -1 * arg_get_value(m, entry.arguments[1]);
+	  printf("NEG, r%i <- %i\n", addr1, m->R[addr1]);
+	} else if (entry.arguments[0].type == ADDRESS) {
+	  addr1 = mem_get_addr(m, entry.arguments[0]);
+	  mem_write(m, addr1, -1 * arg_get_value(m, entry.arguments[1]));
+	  printf("NEG, mem[%i] <- %i\n", addr1, mem_read(m, addr1));
+	} else {
+	  raise(m, "Inappropriate destination for NEG");
+	}
       } else {
-	raise(m, "Non register destination for NEG");
+	raise(m, "Wrong number of arguments for NEG");
       }
       break;
     default:

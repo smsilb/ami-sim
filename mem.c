@@ -31,7 +31,7 @@ int mem_read(struct ami_machine *m, unsigned int addr) {
   if (m->mem[addr].data_type == DATA) {
     return m->mem[addr].data;
   } else {
-    raise(m, "Inappropriate memory access");
+    raise(m, "Inappropriate memory access, attempted to overwrite instruction");
   }
 }
 

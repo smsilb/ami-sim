@@ -11,6 +11,7 @@
 
 void dump_registers(struct ami_machine *m) {
   printf("Registers:\n");
+  printf("pc: %i\n", m->PC);
   printf("b: %i\n", m->R[0]);
 
   int i;
@@ -214,6 +215,78 @@ struct stack_entry disasm_instr(struct ami_machine *m, char *instr) {
 
     token = strtok(NULL, " ");
 
+    if (isdigit(token[0])) {
+      ret.op = IDM;
+      read_argument(&ret, token, stop_words, 12);
+    } else if (token[0] == '-') {
+      if (strlen(token) == 1) {
+	token = strtok(NULL, " ");
+	
+	if (isdigit(token[0])) {
+	  ret.op = IDM;
+	  ret.arguments[1].number = -1 * atoi(token);
+	} else {
+	  ret.op = NEG;
+	  read_argument(&ret, token, stop_words, 12);
+	}
+      } else {
+	if (isdigit(token[1])) {
+	  ret.op = IDM;
+	  ret.arguments[1].number = -1 * atoi(token);
+	} else {
+	  ret.op = NEG;
+	  read_argument(&ret, token + 1, stop_words, 12);
+	}
+      }
+    } else {
+      //Argument arithmetic
+	
+      if (!strcmp(token, "not")) {
+	ret.op = NOT;
+	read_argument(&ret, strtok(NULL, " "), stop_words, 12);
+      } else {
+	/*
+	 * Either ALU arithmetic, Argument arithmetic,
+	 * MOVE, or LOAD.
+	 * Will need to check after parsing that ALU ops
+	 * only used with registers as arguments.
+	 */
+	char argType = token[0];
+
+	token = read_argument(&ret, token, stop_words, 12);
+
+	if (argType == 'r' || argType == 'b') {
+	  token = strtok(NULL, " ");
+	}
+	  
+
+	if (token == NULL) {
+	  if (argType == 'c') {
+	    ret.op = MOVE;
+	  } else if (argType == 'r' || argType == 'b') {
+	    ret.op = STORE;
+	  }
+	} else {
+	  if (!strcmp(token, "and")) {
+	    ret.op = AND;
+	  } else if (!strcmp(token, "or")) {
+	    ret.op = OR;
+	  } else if (!strcmp(token, "+")) {
+	    ret.op = ADD;
+	  } else if (!strcmp(token, "-")) {
+	    ret.op = SUB;
+	  } else if (!strcmp(token, "*")) {
+	    ret.op = MULT;
+	  } else if (!strcmp(token, "/")) {
+	    ret.op = DIV;
+	  } 
+	  read_argument(&ret, strtok(NULL, " "), stop_words, 12);
+	}
+      }
+    }
+
+    /* token = strtok(NULL, " ");
+
     if (token[0] == 'c') {
       ret.op = MOVE;
     } else if (token[0] == 'r') {
@@ -223,7 +296,7 @@ struct stack_entry disasm_instr(struct ami_machine *m, char *instr) {
     } else if (token[0] == '-') {
       ret.op = IDM;
     }
-    read_argument(&ret, token, stop_words, 12);
+    read_argument(&ret, token, stop_words, 12);*/
     break; 
   default:
     printf("Unrecognized command: %s\n", token);
