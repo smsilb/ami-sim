@@ -89,7 +89,9 @@ struct stack_entry disasm_instr(struct ami_machine *m, char *instr) {
 	
 	  if (isdigit(token[0])) {
 	    ret.op = IDM;
+	    ret.arguments[1].type = NUMBER;
 	    ret.arguments[1].number = -1 * atoi(token);
+	    
 	  } else {
 	    ret.op = NEG;
 	    read_argument(&ret, token, stop_words, 12);
@@ -97,7 +99,9 @@ struct stack_entry disasm_instr(struct ami_machine *m, char *instr) {
 	} else {
 	  if (isdigit(token[1])) {
 	    ret.op = IDM;
-	    ret.arguments[1].number = -1 * atoi(token);
+	    ret.arguments[1].type = NUMBER;
+	    ret.arguments[1].number = atoi(token);
+	    
 	  } else {
 	    ret.op = NEG;
 	    read_argument(&ret, token + 1, stop_words, 12);
@@ -224,7 +228,9 @@ struct stack_entry disasm_instr(struct ami_machine *m, char *instr) {
 	
 	if (isdigit(token[0])) {
 	  ret.op = IDM;
+	  ret.arguments[1].type = NUMBER;
 	  ret.arguments[1].number = -1 * atoi(token);
+	  
 	} else {
 	  ret.op = NEG;
 	  read_argument(&ret, token, stop_words, 12);
@@ -232,7 +238,9 @@ struct stack_entry disasm_instr(struct ami_machine *m, char *instr) {
       } else {
 	if (isdigit(token[1])) {
 	  ret.op = IDM;
-	  ret.arguments[1].number = -1 * atoi(token);
+	  ret.arguments[1].type = NUMBER;
+	  ret.arguments[1].number = atoi(token);
+	  
 	} else {
 	  ret.op = NEG;
 	  read_argument(&ret, token + 1, stop_words, 12);
@@ -294,7 +302,7 @@ struct stack_entry disasm_instr(struct ami_machine *m, char *instr) {
     } else if (isdigit(token[0])) {
       ret.op = IDM;
     } else if (token[0] == '-') {
-      ret.op = IDM;
+      ret.op = IDM
     }
     read_argument(&ret, token, stop_words, 12);*/
     break; 
