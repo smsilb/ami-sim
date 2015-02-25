@@ -347,22 +347,6 @@ int run(struct ami_machine* m, int count)
 
 void show_exit_status(struct ami_machine *m)
 {
-  /*  if (!m->elapsed) {
-    printf("MIPS program exits with status %d (approx. %lld instructions at ?? Hz) \n", m->R[REG_A0], m->tsc);
-  } else {
-    long long hz = m->tsc * 1000000000 / m->elapsed;
-    long long khz = hz/1000;
-    long long mhz = khz/1000;
-    long long ghz = mhz/1000;
-    if (ghz > 0)
-      printf("MIPS program exits with status %d (approx. %lld instructions in %lld nsec at %lld.%03lld GHz)\n", m->R[REG_A0], m->tsc, m->elapsed, ghz, mhz);
-    else if (mhz > 0)
-      printf("MIPS program exits with status %d (approx. %lld instructions in %lld nsec at %lld.%03lld MHz)\n", m->R[REG_A0], m->tsc, m->elapsed, mhz, khz);
-    else if (khz > 0)
-      printf("MIPS program exits with status %d (approx. %lld instructions in %lld nsec at %lld.%03lld KHz)\n", m->R[REG_A0], m->tsc, m->elapsed, khz, hz);
-    else 
-      printf("MIPS program exits with status %d (approx. %lld instructions in %lld nsec at %lld Hz)\n", m->R[REG_A0], m->tsc, m->elapsed, hz);
-  }
-  */
+
 }
 
