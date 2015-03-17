@@ -80,10 +80,15 @@ struct ami_machine {
   /* debug options */
   int opt_printstack;
   int opt_dumpreg;
+  int opt_graphical;
   char *filename;
   int opt_ac;
   char **opt_av;
   struct breakpoint *breakpoints;
+
+  /* file descriptors for GUI */
+  int childread, childwrite, parentread, parentwrite;
+  FILE *ptc, *ctp;
 
   /* run state */
   int halted;

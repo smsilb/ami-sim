@@ -103,16 +103,25 @@ void dump_breakpoints(struct ami_machine *m) {
   }
 }
 
-void readcmd() {
+void readcmd(struct ami_machine *m) {
   static char *line = NULL;
   if (line) free(line);
-  line = readline("> ");
-  if (!line) {
-    ac = 1;
-    strcpy(av[0], "q");
-    return;
-  } else if (!*line) {
-    return; // do same command again
+  if (m->opt_graphical == 1) {
+    char buffer[80];
+    fgets(buffer, 80, m->ptc);
+    line = (char *) malloc(sizeof(buffer) + 1);
+    strcpy(line, buffer);
+    printf("> %s\n", line);
+    write(m->ctp, "hello", sizeof("hello"));
+  } else {
+    line = readline("> ");
+    if (!line) {
+      ac = 1;
+      strcpy(av[0], "q");
+      return;
+    } else if (!*line) {
+      return; // do same command again
+    }
   }
 
   add_history(line);
@@ -151,7 +160,7 @@ void interactive_debug(struct ami_machine *m)
     }
     err = 0;
 
-    readcmd();
+    readcmd(m);
     if (ac == 0)
       continue;
     if (!strpcmp(av[0], "quit") || !strpcmp(av[0], "exit")) {
