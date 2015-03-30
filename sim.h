@@ -86,9 +86,8 @@ struct ami_machine {
   char **opt_av;
   struct breakpoint *breakpoints;
 
-  /* file descriptors for GUI */
-  int childread, childwrite, parentread, parentwrite;
-  FILE *ptc, *ctp;
+  /*Pointer to shared memory for GUI*/
+  char *shm;
 
   /* run state */
   int halted;

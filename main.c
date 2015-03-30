@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <sys/shm.h>
+#include <sys/ipc.h>
 
 #include "sim.h"
 
@@ -59,8 +61,23 @@ int main(int ac, char **av)
     m->parentread = PARENTREAD;
     m->parentwrite = PARENTWRITE;*/
 
-    mkfifo("ptc", 0755);
-    mkfifo("ctp", 0755);
+    //mkfifo("ptc", 0755);
+    //mkfifo("ctp", 0755);
+    int shmid;
+    key_t key = 1234;
+    char *shm;
+    
+    if ((shmid = shmget(key, 256, IPC_CREAT | 0666)) < 0) {
+      perror("Could not initialize GUI\n");
+      exit(1);
+    }
+
+    if ((shm = shmat(shmid, NULL, 0)) == (char *) -1) {
+      perror("Could not initialize GUI\n");
+      exit(1);
+    }
+
+    *shm = '\0';
     status = fork();
 
     if (status == 0) {
@@ -68,25 +85,35 @@ int main(int ac, char **av)
       dup2(CHILDWRITE, 1);
       close(PARENTREAD);
       close(PARENTWRITE);*/
-      system("perl test.pl");
+      system("perl gui.pl 1234");
     } else {
       /*      //    dup2(PARENTREAD, 0);
       //dup2(PARENTWRITE, 1);
       close(CHILDREAD);
       close(CHILDWRITE);
       */
-      FILE *in = fopen("ptc", "r");
+
+      /*
+	it is extremely important that the order of these two opens
+	stay the same or the program will hang forever while
+	each side waits for the other
+       */
+      /*      FILE *in = fopen("ptc", "r");
       m->ptc = in;
 
       FILE *out = fopen("ctp", "w");
-      m->ctp = out;
+      m->ctp = out;*/
+      
+      m->shm = shm;
 
       interactive_debug(m);
 
-      fclose(in);
-      fclose(out);
-      unlink("ptc");
-      unlink("ctp");
+      shmdt(shm);
+
+      //fclose(in);
+      //fclose(out);
+      //unlink("ptc");
+      //unlink("ctp");
     }
   } else {
     interactive_debug(m);

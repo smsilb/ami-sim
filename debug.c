@@ -108,11 +108,32 @@ void readcmd(struct ami_machine *m) {
   if (line) free(line);
   if (m->opt_graphical == 1) {
     char buffer[80];
-    fgets(buffer, 80, m->ptc);
-    line = (char *) malloc(sizeof(buffer) + 1);
+    int buffered = 0;
+    while (*m->shm == '\0') {
+      nanosleep(100000, &buffered);
+    }
+
+    buffered = 0;
+    char *s;
+
+    for (s = m->shm; *s != '\0'; s++) {
+      buffer[buffered] = *s;
+      buffered++;
+    }
+    buffer[buffered] = '\0';
+
+    line = (char *) malloc(buffered);
     strcpy(line, buffer);
     printf("> %s\n", line);
-    write(m->ctp, "hello", sizeof("hello"));
+
+    int i;
+    s = m->shm;
+    for (i = 0; i < buffered; i++) {
+      *s = '\0';
+      s++;
+    }
+
+    buffered = 0;
   } else {
     line = readline("> ");
     if (!line) {
