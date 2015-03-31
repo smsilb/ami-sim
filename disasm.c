@@ -29,7 +29,6 @@ void dump_disassembly(FILE *out, unsigned int pc, unsigned int inst)
 struct stack_entry disasm_instr(struct ami_machine *m, char *instr) {
   struct stack_entry ret;
   char *stop_words[12];
-  char *copy = (char*) malloc(strlen(instr) + 1);
 
   //copy the instruction to preserve
   //for printing later

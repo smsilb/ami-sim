@@ -109,11 +109,11 @@ void readcmd(struct ami_machine *m) {
   if (m->opt_graphical == 1) {
     char buffer[80];
     int buffered = 0;
+    
     while (*m->shm == '\0') {
       nanosleep(100000, &buffered);
     }
-
-    buffered = 0;
+ 
     char *s;
 
     for (s = m->shm; *s != '\0'; s++) {
@@ -161,24 +161,97 @@ void readcmd(struct ami_machine *m) {
   }
 }
 
+void update_gui(struct ami_machine *m) {
+  int i, buffer_size = 256, sent_chars = 0, sleep_time;
+  char *s;
+  char buffer[buffer_size];
+
+  s = m->shm;
+  for (i = 0; i < 256; i++) {
+    *s = '\0';
+    s++;
+  }
+
+  /*sprintf(buffer, "registers");
+  s = m->shm;
+  for (i = 0; i < strlen(buffer); i++) {
+    *s = buffer[i];
+    s++;
+  }
+  *s = '\0';
+  printf("buffer is %s\n", buffer);
+  
+  while (*m->shm != '\0') {
+    nanosleep(100000, &sleep_time);
+    s = m->shm;
+    for (i = 0; i < strlen(buffer); i++) {
+      *s = buffer[i];
+      s++;
+    }
+    *s = '\0';
+  }
+  printf("moving on\n");*/
+  
+  sprintf(buffer, "pc: %i\n", m->PC);
+  s = m->shm;
+  for (i = 0; i < strlen(buffer); i++) {
+    *s = buffer[i];
+    s++;
+  }
+  *s = '\0';
+
+  printf("Sent: %s\n", m->shm);
+
+  while (*m->shm != '\0') {
+    nanosleep(100000, &sleep_time);
+  }
+
+  /*for (i = 1; i < m->reg_count; i++) {
+    if (strlen(buffer) + 5 > 256) {
+      strcpy(m->shm, buffer);
+      while (*m->shm != '*') {
+	nanosleep(100000, &sleep_time);
+      }
+      sprintf(buffer, "%i: %i\n", i, m->R[i]);
+    } else {
+      sprintf(buffer, "%s%i: %i\n", buffer, i, m->R[i]);
+    }
+  }
+  strcpy(m->shm, buffer);
+  /*  while (*m->shm != '*') {
+    nanosleep(100000, &sleep_time);
+  }
+  strcpy(m->shm, "end");*/
+
+  //printf("Sent %s\n", m->shm);
+  /*  while (*m->shm != '*') {
+    nanosleep(100000, &sleep_time);
+    }*/
+
+  *m->shm = '\0';
+}
+
 void interactive_debug(struct ami_machine *m)
 {
   rl_initialize();
   rl_bind_key('\t', rl_insert);
 
   int err;
-
+  if (m->opt_graphical) {
+    update_gui(m);
+  }
   printf("Welcome to the AMI simulator built-in debugger. Type 'help' for a listing of commands.");
   printf("\n");
 
   for (;;) {
     
-    if (m->opt_dumpreg) {
-      dump_registers(m);
-    }
-    if (m->opt_printstack != -1) {
-      dump_stack(m, m->opt_printstack);
-    }
+      if (m->opt_dumpreg) {
+	dump_registers(m);
+      }
+      if (m->opt_printstack != -1) {
+	dump_stack(m, m->opt_printstack);
+      } 
+
     err = 0;
 
     readcmd(m);
@@ -282,6 +355,9 @@ void interactive_debug(struct ami_machine *m)
 	  );
     } else {
       printf("unrecognized command '%s'\n", av[0]);
+    }
+    if (m->opt_graphical) {
+      update_gui(m);
     }
   }
 

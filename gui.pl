@@ -6,8 +6,11 @@ use Tk;
 use Carp;
 use IPC::SharedMem;
 
+use Time::HiRes qw(usleep);
+
 #Get access to shared memory
 my $shm = IPC::SharedMem->new($ARGV[0], 256, S_IRWXU) || die $!;
+$shm->write("reset\0", 0, length "reset\0");
 
 #Global Variables
 my $age = 10;
@@ -29,7 +32,7 @@ my $io_frm = $mw->Frame();
 #controls
 my $step = $cntrl_frm -> Button(-text=>"Step", -command=>\&step);
 my $steps_lbl = $cntrl_frm -> Label(-text=>"# of steps:");
-my $steps_entry = $cntrl_frm -> Entry();
+my $steps_entry = $cntrl_frm -> Entry(-width=>3);
 my $quit = $cntrl_frm -> Button(-text=>"Quit", -command=>\&quit);
 my $reset = $cntrl_frm -> Button(-text=>"Reset", -command=>\&reset);
 my $continue = $cntrl_frm -> Button(-text=>"Continue", -command=>\&continue);
@@ -114,6 +117,7 @@ $input_lab -> grid(-row=>3, -column=>1);
 $input_entry -> grid(-row=>3, -column=>2);
 $io_frm -> grid(-row=>2, -column=>5, -columnspan=>2);
 
+receive_update("");
 MainLoop;
 
 ## Functions
@@ -125,20 +129,53 @@ sub step{
     }
     my $message = "step ".$steps."\0";
     $shm->write($message, 0, length $message);
+    receive_update("step");
 }
 
 sub continue{
     my $message = "continue\0";
     $shm->write($message, 0, length $message);
+    receive_update("continue");
 }
 
 sub quit{
     my $message = "quit\0";
     $shm->write($message, 0, length $message);
+    receive_update("reset");
     exit;
 }
 
 sub reset{
     my $message = "reset\0";
     $shm->write($message, 0, length $message);
+    receive_update("reset");
+}
+
+sub receive_update{
+    my $prev_command = shift;
+
+    my $message = $shm->read(0,256);
+    my $combined;
+
+    until ($message ne $prev_command) {
+	usleep(10);
+	print "Message was: ".$message."\n";
+	$message = $shm->read(0,256);
+    }
+    
+    my $char = $shm->read(0, 1);
+    $message = $char;
+    my $i = 1;
+    until ($char eq "\0") {
+	$char = $shm->read($i, 1);
+	$message .= $char;
+	$i++;
+    }
+
+    $combined = $message;
+
+    $reg_dat->delete('1.0', 'end');
+    $reg_dat->Insert($combined);
+    
+    $shm->write("\0", 0, 1);
 }

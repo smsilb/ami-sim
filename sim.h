@@ -130,6 +130,7 @@ void init_stop_words(char *stop_words[]);
 enum { RUN_OK=0, RUN_BREAK=1, RUN_BREAKPOINT=2, RUN_FAULT=3, RUN_EXIT=4, RUN_HALTED=5 };
 int run(struct ami_machine* m, int count);
 void show_exit_status(struct ami_machine *m);
+void update_gui(struct ami_machine *m);
 void interactive_debug(struct ami_machine* m);
 int is_breakpoint(struct ami_machine *m, unsigned int addr);
 int dosyscall(struct ami_machine *m);
