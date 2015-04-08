@@ -166,7 +166,6 @@ void send_string_to_gui(struct ami_machine *m, char string[]) {
   int i, sleep_time;
   //copy string to shared memory
   s = m->shm + 1;
-  printf("%i\n", (int)strlen(string));
   for (i = 0; i < strlen(string); i++) {
     *s = string[i];
     s++;
@@ -175,7 +174,6 @@ void send_string_to_gui(struct ami_machine *m, char string[]) {
 
   //set 'ready' flag
   *m->shm = 'r';
-  printf("sent %s\n", m->shm);
 
   while (*m->shm != '\0') {
     nanosleep(100000, &sleep_time);
@@ -207,8 +205,7 @@ void update_gui(struct ami_machine *m) {
   //add delimiter to end of buffer
   sprintf(buffer, "%s_", buffer);
 
-  for (i = 0; i < 100; i++) {
-    printf("line %i\n", i);
+  for (i = 0; i < STACK_SIZE; i++) {
     char *data = read_stack_entry(m, i);
     if (strlen(buffer) + strlen(data) > 253) {
       send_string_to_gui(m, buffer);
@@ -224,7 +221,6 @@ void update_gui(struct ami_machine *m) {
   //set 'end' flag
   *m->shm = 'r';
   *(m->shm + 1) = 'e';
-  printf("here\n");
 
   /*for (i = 1; i < m->reg_count; i++) {
     if (strlen(buffer) + 5 > 256) {

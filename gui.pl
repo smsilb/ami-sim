@@ -48,6 +48,10 @@ $reg_dat->insert('end', "pc := 4\nr1 := 16\nr2 := 40\n");
 #stack display
 my $stack_lab = $stack_frm -> Label(-text=>"Stack:");
 my $stack_dat = $stack_frm -> Text(-width=>30, -height=>30, -takefocus=>0);
+$stack_dat->tagConfigure('highlighted', 
+			 -foreground=>"white",
+			 -background=>"blue");
+
 my $stack_srl_y = $stack_frm -> Scrollbar(-orient=>'v', -command=>[yview => $stack_dat]);
 $stack_dat -> configure(-yscrollcommand=>['set', $stack_srl_y]);
 
@@ -173,7 +177,6 @@ sub receive_update{
 	    $i++;
 	}
 
-	print "received $message\n";
 	#add to full message
 	$combined .= $message;
 	$shm->write("\0", 0, 1);
@@ -189,8 +192,28 @@ sub receive_update{
     $reg_dat->Insert($boxes[0]);
 
     $stack_dat->delete('1.0', 'end');
+    my ($pc) = ($boxes[0] =~ /^pc: (\d+)/);
+    my $i = 0;
 
     for (split "\n", $boxes[1]) {
-	$stack_dat->insert('end', $_."\n");
+	if ($i == $pc) {
+	    $stack_dat->insert('end', $_."\n", 'highlighted');
+	} else {
+	    $stack_dat->insert('end', $_."\n");
+	}
+	$i++;
     }
+
+#    $stack_dat->FindAll(-regex, -nocase, "$pc\: [^\n]+\n");
+
+ #   if ($stack_dat->tagRanges('sel')) {
+#	print "found ranges\n";
+#	my %startfinish  = $stack_dat->tagRanges('sel');
+#	foreach(sort keys %startfinish) {
+#	    $stack_dat->tagAdd("foundtag", $_, $startfinish{$_});
+#	}
+ #       $stack_dat->tagRemove('sel', '1.0', 'end');
+ #   } else {
+#	print "no ranges\n";
+ #   }
 }
