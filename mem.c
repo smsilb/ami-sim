@@ -63,6 +63,21 @@ void mem_write(struct ami_machine *m, unsigned int addr, int value) {
   }
 }
 
+char * read_stack_entry(struct ami_machine *m, int addr) {
+  char * memValue;
+  if (m->mem[addr].data_type == INSTRUCTION) {
+    memValue = (char *) malloc(sizeof(m->mem[addr].instruction) + 1);
+    strcpy(memValue, m->mem[addr].instruction);
+  } else {
+    char buffer[80];
+    sprintf(buffer, "%i: %i", addr, m->mem[addr].data);
+    memValue = (char*) malloc(sizeof(buffer) + 1);
+    strcpy(memValue, buffer);
+  }
+
+  return memValue;
+}
+
 void dump_segments(struct ami_machine *m) {
   printf("dumping segments\n");
 }

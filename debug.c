@@ -161,6 +161,27 @@ void readcmd(struct ami_machine *m) {
   }
 }
 
+void send_string_to_gui(struct ami_machine *m, char string[]) {
+  char *s;
+  int i, sleep_time;
+  //copy string to shared memory
+  s = m->shm + 1;
+  printf("%i\n", (int)strlen(string));
+  for (i = 0; i < strlen(string); i++) {
+    *s = string[i];
+    s++;
+  }
+  *s = '\0';
+
+  //set 'ready' flag
+  *m->shm = 'r';
+  printf("sent %s\n", m->shm);
+
+  while (*m->shm != '\0') {
+    nanosleep(100000, &sleep_time);
+  }
+}
+
 void update_gui(struct ami_machine *m) {
   int i, buffer_size = 256, sent_chars = 0, sleep_time;
   char *s;
@@ -172,39 +193,38 @@ void update_gui(struct ami_machine *m) {
     s++;
   }
 
-  /*sprintf(buffer, "registers");
-  s = m->shm;
-  for (i = 0; i < strlen(buffer); i++) {
-    *s = buffer[i];
-    s++;
-  }
-  *s = '\0';
-  printf("buffer is %s\n", buffer);
-  
-  while (*m->shm != '\0') {
-    nanosleep(100000, &sleep_time);
-    s = m->shm;
-    for (i = 0; i < strlen(buffer); i++) {
-      *s = buffer[i];
-      s++;
+  //build string to send
+  sprintf(buffer, "pc: %i\nb: %i\n", m->PC, m->R[0]);
+  for (i = 1; i < m->reg_count; i++) {
+    if (strlen(buffer) + 5 > 255) {
+      break;
+    } else {
+      //add new line to string
+      sprintf(buffer, "%s%i: %i\n", buffer, i, m->R[i]);
     }
-    *s = '\0';
   }
-  printf("moving on\n");*/
-  
-  sprintf(buffer, "pc: %i\n", m->PC);
-  s = m->shm;
-  for (i = 0; i < strlen(buffer); i++) {
-    *s = buffer[i];
-    s++;
-  }
-  *s = '\0';
 
-  printf("Sent: %s\n", m->shm);
+  //add delimiter to end of buffer
+  sprintf(buffer, "%s_", buffer);
 
-  while (*m->shm != '\0') {
-    nanosleep(100000, &sleep_time);
+  for (i = 0; i < 100; i++) {
+    printf("line %i\n", i);
+    char *data = read_stack_entry(m, i);
+    if (strlen(buffer) + strlen(data) > 253) {
+      send_string_to_gui(m, buffer);
+      sprintf(buffer, "%s\n", data);
+    } else {
+      sprintf(buffer, "%s%s\n", buffer, data); 
+    }
+    //free(data);
   }
+
+  send_string_to_gui(m, buffer);
+
+  //set 'end' flag
+  *m->shm = 'r';
+  *(m->shm + 1) = 'e';
+  printf("here\n");
 
   /*for (i = 1; i < m->reg_count; i++) {
     if (strlen(buffer) + 5 > 256) {

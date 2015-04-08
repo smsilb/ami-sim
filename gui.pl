@@ -10,7 +10,6 @@ use Time::HiRes qw(usleep);
 
 #Get access to shared memory
 my $shm = IPC::SharedMem->new($ARGV[0], 256, S_IRWXU) || die $!;
-$shm->write("reset\0", 0, length "reset\0");
 
 #Global Variables
 my $age = 10;
@@ -18,7 +17,7 @@ my $gender = "Male";
 
 # Main Window
 my $mw = new MainWindow;
-$mw->geometry('600x400-200+200');
+$mw->geometry('700x500-200+200');
 
 #GUI Building Area
 
@@ -48,7 +47,7 @@ $reg_dat->insert('end', "pc := 4\nr1 := 16\nr2 := 40\n");
 
 #stack display
 my $stack_lab = $stack_frm -> Label(-text=>"Stack:");
-my $stack_dat = $stack_frm -> Text(-width=>20, -height=>30, -takefocus=>0);
+my $stack_dat = $stack_frm -> Text(-width=>30, -height=>30, -takefocus=>0);
 my $stack_srl_y = $stack_frm -> Scrollbar(-orient=>'v', -command=>[yview => $stack_dat]);
 $stack_dat -> configure(-yscrollcommand=>['set', $stack_srl_y]);
 
@@ -141,7 +140,6 @@ sub continue{
 sub quit{
     my $message = "quit\0";
     $shm->write($message, 0, length $message);
-    receive_update("reset");
     exit;
 }
 
@@ -153,29 +151,46 @@ sub reset{
 
 sub receive_update{
     my $prev_command = shift;
+    my $message = "";
+    my $combined = "";
 
-    my $message = $shm->read(0,256);
-    my $combined;
+    #read data 
+    #until we receive 'end' flag
+    while ("pigs" ne "fly") {
+	#wait for 'ready' flag
+	my $char = $shm->read(0, 1);
+	until ($char eq "r") {
+	    usleep(10);
+	    $char = $shm->read(0, 1);
+	}
 
-    until ($message ne $prev_command) {
-	usleep(10);
-	print "Message was: ".$message."\n";
-	$message = $shm->read(0,256);
+	#read characters until null char
+	$message = "";
+	my $i = 1;
+	until ($char eq "\0") {
+	    $char = $shm->read($i, 1);
+	    $message .= $char;
+	    $i++;
+	}
+
+	print "received $message\n";
+	#add to full message
+	$combined .= $message;
+	$shm->write("\0", 0, 1);
+	
+	if ($shm->read(1,1) eq "e") {
+	    last;
+	}
     }
-    
-    my $char = $shm->read(0, 1);
-    $message = $char;
-    my $i = 1;
-    until ($char eq "\0") {
-	$char = $shm->read($i, 1);
-	$message .= $char;
-	$i++;
-    }
 
-    $combined = $message;
+    my @boxes = split "_", $combined;
 
     $reg_dat->delete('1.0', 'end');
-    $reg_dat->Insert($combined);
-    
-    $shm->write("\0", 0, 1);
+    $reg_dat->Insert($boxes[0]);
+
+    $stack_dat->delete('1.0', 'end');
+
+    for (split "\n", $boxes[1]) {
+	$stack_dat->insert('end', $_."\n");
+    }
 }

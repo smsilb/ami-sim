@@ -120,6 +120,7 @@ int add_get_value(struct ami_machine *m, struct argument add);
 int mem_get_addr(struct ami_machine *m, struct argument arg);
 int mem_read(struct ami_machine *m, unsigned int addr);
 void mem_write(struct ami_machine *m, unsigned int addr, int value);
+char *read_stack_entry(struct ami_machine *m, int addr);
 
 char *readfile(char *filename);
 
