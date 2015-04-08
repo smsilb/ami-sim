@@ -1,6 +1,6 @@
-// Copyright (c) 2014, Kevin Walsh.  All rights reserved.
+// Copyright (c) 2015, Sam Silberstein.  All rights reserved.
 // Licensed under the Apache License, Version 2.0 (the "License").
-// Author: kwalsh@cs.holycross.edu
+// Author: smsilb14@g.holycross.edu
 
 #include <stdio.h>
 #include <stdlib.h>
