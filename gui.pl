@@ -204,16 +204,4 @@ sub receive_update{
 	$i++;
     }
 
-#    $stack_dat->FindAll(-regex, -nocase, "$pc\: [^\n]+\n");
-
- #   if ($stack_dat->tagRanges('sel')) {
-#	print "found ranges\n";
-#	my %startfinish  = $stack_dat->tagRanges('sel');
-#	foreach(sort keys %startfinish) {
-#	    $stack_dat->tagAdd("foundtag", $_, $startfinish{$_});
-#	}
- #       $stack_dat->tagRemove('sel', '1.0', 'end');
- #   } else {
-#	print "no ranges\n";
- #   }
 }
