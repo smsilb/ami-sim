@@ -249,9 +249,11 @@ void update_gui(struct ami_machine *m) {
   //if we were waiting for input, capture the input sent from the gui
   if (m->wait_input) {
       while (*m->shm != 'i') {
+          //printf("Waiting for input\n");
           nanosleep(1000);
       }
-      m->rcvd_input = atoi(m->shm);
+      m->rcvd_input = atoi(m->shm + 1);
+      printf("Received: %s, %i\n", m->shm, m->rcvd_input);
       m->wait_input = 0;
   }
 

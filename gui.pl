@@ -12,8 +12,7 @@ use Time::HiRes qw(usleep);
 my $shm = IPC::SharedMem->new($ARGV[0], 256, S_IRWXU) || die $!;
 
 #Global Variables
-my $age = 10;
-my $gender = "Male";
+my $wait_input = 0;
 
 # Main Window
 my $mw = new MainWindow;
@@ -97,39 +96,54 @@ MainLoop;
 
 ## Functions
 sub step{
-    my $steps = $steps_entry->get();
+    if ($wait_input != 1) {
+	print "Stepping\n";
+	my $steps = $steps_entry->get();
 
-    if ($steps eq "") {
-	$steps = "1"
+	if ($steps eq "") {
+	    $steps = "1"
+	}
+	my $message = "step ".$steps."\0";
+	$shm->write($message, 0, length $message);
+	receive_update("step");
     }
-    my $message = "step ".$steps."\0";
-    $shm->write($message, 0, length $message);
-    receive_update("step");
 }
 
 sub continue{
-    my $message = "continue\0";
-    $shm->write($message, 0, length $message);
-    receive_update("continue");
+    if ($wait_input != 1) {
+	my $message = "continue\0";
+	$shm->write($message, 0, length $message);
+	receive_update("continue");
+    }
 }
 
 sub quit{
-    my $message = "quit\0";
-    $shm->write($message, 0, length $message);
-    exit;
+    if ($wait_input != 1) {
+	my $message = "quit\0";
+	$shm->write($message, 0, length $message);
+	exit;
+    }
 }
 
 sub reset{
-    my $message = "reset\0";
-    $shm->write($message, 0, length $message);
-    receive_update("reset");
+    #todo: send garbage before resetting
+    #so that you can reset without sending input
+    if ($wait_input != 1) {
+	my $message = "reset\0";
+	$shm->write($message, 0, length $message);
+	receive_update("reset");
+    }
 }
 
 sub input{
-    my $message = $input_entry->get();
-    $io_box->insert('end', "$message\n");
-    $shm->write("i".$message, 0, length $message);
-    receive_update("input");
+    if ($wait_input == 1) {
+	my $message = $input_entry->get();
+	print $message;
+	$io_box->insert('end', "$message\n");
+	$shm->write("i$message\0", 0, length $message + 2);
+	$wait_input = 0;
+	receive_update("input");
+    }
 }
 
 sub receive_update{
@@ -185,6 +199,9 @@ sub receive_update{
 	$i++;
     }
     
+    if ($boxes[2] =~ /\>/) {
+	$wait_input = 1;
+    }
     $io_box->insert('end', $boxes[2]);
 }
 
