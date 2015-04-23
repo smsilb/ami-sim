@@ -77,29 +77,31 @@ struct breakpoint {
 };
 
 struct ami_machine {
-  /* debug options */
-  int opt_printstack;
-  int opt_dumpreg;
-  int opt_graphical;
-  char *filename;
-  int opt_ac;
-  char **opt_av;
-  struct breakpoint *breakpoints;
+    /* debug options */
+    int opt_printstack;
+    int opt_dumpreg;
+    int opt_graphical;
+    char *filename;
+    int opt_ac;
+    char **opt_av;
+    struct breakpoint *breakpoints;
 
-  /*Pointer to shared memory for GUI*/
-  char *shm;
+    /* gui management */
+    char *shm;
+    int wait_input;
+    int rcvd_input;
 
-  /* run state */
-  int halted;
+    /* run state */
+    int halted;
 
-  /* memory state */
-  struct stack_entry mem[STACK_SIZE];
-  unsigned int slots_used;
+    /* memory state */
+    struct stack_entry mem[STACK_SIZE];
+    unsigned int slots_used;
 
-  /* CPU registers */
-  int R[MAX_REGISTERS];
-  unsigned int PC, nPC;
-  int reg_count;
+    /* CPU registers */
+    int R[MAX_REGISTERS];
+    unsigned int PC, nPC;
+    int reg_count;
 };
 
 

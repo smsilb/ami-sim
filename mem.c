@@ -65,8 +65,9 @@ void mem_write(struct ami_machine *m, unsigned int addr, int value) {
 
 char * read_stack_entry(struct ami_machine *m, int addr) {
   char * memValue;
+
   if (m->mem[addr].data_type == INSTRUCTION) {
-    memValue = (char *) malloc(sizeof(m->mem[addr].instruction) + 1);
+    memValue = (char *) malloc(strlen(m->mem[addr].instruction) + 1);
     strcpy(memValue, m->mem[addr].instruction);
   } else {
     char buffer[80];

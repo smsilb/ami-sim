@@ -218,7 +218,7 @@ void update_gui(struct ami_machine *m) {
   }
 
   //add delimiter to end of buffer
-  sprintf(buffer, "%s_", buffer);
+  sprintf(buffer, "%s~", buffer);
 
   for (i = 0; i < STACK_SIZE; i++) {
     char *data = read_stack_entry(m, i);
@@ -231,11 +231,29 @@ void update_gui(struct ami_machine *m) {
     //free(data);
   }
 
+  if (m->wait_input) {
+      if (strlen(buffer) + 2 > 253) {
+          send_string_to_gui(m, buffer);
+          sprintf(buffer, "~>");
+      } else {
+          sprintf(buffer, "%s~>", buffer);
+      }
+  }
+
   send_string_to_gui(m, buffer);
 
   //set 'end' flag
   *m->shm = 'r';
   *(m->shm + 1) = 'e';
+
+  //if we were waiting for input, capture the input sent from the gui
+  if (m->wait_input) {
+      while (*m->shm != 'i') {
+          nanosleep(1000);
+      }
+      m->rcvd_input = atoi(m->shm);
+      m->wait_input = 0;
+  }
 
   /*for (i = 1; i < m->reg_count; i++) {
     if (strlen(buffer) + 5 > 256) {

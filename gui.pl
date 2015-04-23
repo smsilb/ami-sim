@@ -63,36 +63,8 @@ my $input_lab = $io_frm -> Label(-text=>"Input:");
 my $input_entry = $io_frm -> Entry();
 my $io_box = $io_frm -> Text(-height=>28, -width=>20, -takefocus=>1);
 
+$input_entry->bind('<Return>', \&input);
 $io_box->insert('end', ">6\n6\n->49\n");
-
-
-
-my $lab = $cntrl_frm -> Label(-text=>"Name:");
-my $ent = $cntrl_frm -> Entry();
-#Age
-my $scl = $mw -> Scale(-label=>"Age :",
-     -orient=>'v',         -digit=>1,
-     -from=>10,        -to=>50,
-		       -variable=>\$age,    -tickinterval=>10);
-
-#Gender
-my $frm_gender = $mw -> Frame();
-my $lbl_gender = $frm_gender -> Label(-text=>"Sex ");
-my $rdb_m = $frm_gender -> Radiobutton(-text=>"Male",  
-				       -value=>"Male",  -variable=>\$gender);
-my $rdb_f = $frm_gender -> Radiobutton(-text=>"Female",
-				       -value=>"Female",-variable=>\$gender);
-
-
-my $but = $mw -> Button(-text=>"Push Me", -command =>\&push_button);
-
-#Text Area
-my $textarea = $mw -> Frame();
-my $txt = $textarea -> Text(-width=>40, -height=>10);
-my $srl_y = $textarea -> Scrollbar(-orient=>'v',-command=>[yview => $txt]);
-my $srl_x = $textarea -> Scrollbar(-orient=>'h',-command=>[xview => $txt]);
-$txt -> configure(-yscrollcommand=>['set', $srl_y],
-		  -xscrollcommand=>['set',$srl_x]);
 
 #Geometry Management
 $step -> grid(-row=>1,-column=>1);
@@ -153,6 +125,13 @@ sub reset{
     receive_update("reset");
 }
 
+sub input{
+    my $message = $input_entry->get();
+    $io_box->insert('end', "$message\n");
+    $shm->write("i".$message, 0, length $message);
+    receive_update("input");
+}
+
 sub receive_update{
     my $prev_command = shift;
     my $message = "";
@@ -186,7 +165,7 @@ sub receive_update{
 	}
     }
 
-    my @boxes = split "_", $combined;
+    my @boxes = split "~", $combined;
 
     $reg_dat->delete('1.0', 'end');
     $reg_dat->Insert($boxes[0]);
@@ -199,11 +178,13 @@ sub receive_update{
 	if ($i == $pc) {
 	    $stack_dat->insert('end', $_."\n", 'highlighted');
 	} else {
-	    my ($line) = ($_ =~ /(\d+: [a-zA-Z0-9:=\-\*\+\/\, ]+)/);
+	    my ($line) = ($_ =~ /(\d+: [a-zA-Z0-9:=\-\*\+\/\,_ ]+)/);
 	    $stack_dat->insert('end', "$line\n");
 
 	}
 	$i++;
     }
-
+    
+    $io_box->insert('end', $boxes[2]);
 }
+
