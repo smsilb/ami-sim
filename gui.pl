@@ -41,9 +41,6 @@ my $reg_dat = $reg_frm -> Text(-width=>20, -height=>30, -takefocus=>0);
 my $reg_srl_y = $reg_frm -> Scrollbar(-orient=>'v', -command=>[yview => $reg_dat]);
 $reg_dat -> configure(-yscrollcommand=>['set', $reg_srl_y]);
 
-$reg_dat->insert('end', "pc := 4\nr1 := 16\nr2 := 40\n");
-
-
 #stack display
 my $stack_lab = $stack_frm -> Label(-text=>"Stack:");
 my $stack_dat = $stack_frm -> Text(-width=>30, -height=>30, -takefocus=>0);
@@ -54,8 +51,6 @@ $stack_dat->tagConfigure('highlighted',
 my $stack_srl_y = $stack_frm -> Scrollbar(-orient=>'v', -command=>[yview => $stack_dat]);
 $stack_dat -> configure(-yscrollcommand=>['set', $stack_srl_y]);
 
-$stack_dat->insert('end', "1:b := 16\n2:contents b, 0 := 25\n3:contents b, 1 := 6\n");
-
 #console
 my $console_lab = $io_frm -> Label(-text=>"Console:");
 my $input_lab = $io_frm -> Label(-text=>"Input:");
@@ -63,7 +58,6 @@ my $input_entry = $io_frm -> Entry();
 my $io_box = $io_frm -> Text(-height=>28, -width=>20, -takefocus=>1);
 
 $input_entry->bind('<Return>', \&input);
-$io_box->insert('end', ">6\n6\n->49\n");
 
 #Geometry Management
 $step -> grid(-row=>1,-column=>1);
@@ -138,7 +132,6 @@ sub reset{
 sub input{
     if ($wait_input == 1) {
 	my $message = $input_entry->get();
-	print $message;
 	$io_box->insert('end', "$message\n");
 	$message = "i$message\0";
 	$shm->write($message, 0, length $message);
@@ -200,7 +193,7 @@ sub receive_update{
 	$i++;
     }
     
-    if ($boxes[2] =~ /\>/) {
+    if ($boxes[2] =~ /^\>$/) {
 	$wait_input = 1;
     }
     $io_box->insert('end', $boxes[2]);

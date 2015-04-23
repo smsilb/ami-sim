@@ -231,13 +231,17 @@ void update_gui(struct ami_machine *m) {
     free(data);
   }
 
-  if (m->wait_input) {
+  if (m->console_io_status == 1) {
       if (strlen(buffer) + 2 > 253) {
           send_string_to_gui(m, buffer);
           sprintf(buffer, "~>");
       } else {
           sprintf(buffer, "%s~>", buffer);
       }
+  } else if (m->console_io_status == 2) {
+      send_string_to_gui(m, buffer);
+      sprintf(buffer, "~-> %i", m->console_io_value);
+      m->console_io_status = 0;
   }
 
   send_string_to_gui(m, buffer);
@@ -247,14 +251,13 @@ void update_gui(struct ami_machine *m) {
   *(m->shm + 1) = 'e';
 
   //if we were waiting for input, capture the input sent from the gui
-  if (m->wait_input) {
+  if (m->console_io_status == 1) {
       while (*m->shm != 'i') {
           //printf("Waiting for input\n");
           nanosleep(100000);
       }
-      m->rcvd_input = atoi(m->shm + 1);
-      printf("Received: %s, %i\n", m->shm, m->rcvd_input);
-      m->wait_input = 0;
+      m->console_io_value = atoi(m->shm + 1);
+      m->console_io_status = 0;
   }
 
   /*for (i = 1; i < m->reg_count; i++) {

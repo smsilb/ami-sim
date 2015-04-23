@@ -88,8 +88,8 @@ struct ami_machine {
 
     /* gui management */
     char *shm;
-    int wait_input;
-    int rcvd_input;
+    int console_io_status;
+    int console_io_value;
 
     /* run state */
     int halted;
