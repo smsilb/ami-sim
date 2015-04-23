@@ -228,7 +228,7 @@ void update_gui(struct ami_machine *m) {
     } else {
       sprintf(buffer, "%s%s\n", buffer, data); 
     }
-    //free(data);
+    free(data);
   }
 
   if (m->wait_input) {
@@ -250,7 +250,7 @@ void update_gui(struct ami_machine *m) {
   if (m->wait_input) {
       while (*m->shm != 'i') {
           //printf("Waiting for input\n");
-          nanosleep(1000);
+          nanosleep(100000);
       }
       m->rcvd_input = atoi(m->shm + 1);
       printf("Received: %s, %i\n", m->shm, m->rcvd_input);
