@@ -196,11 +196,12 @@ sub receive_update{
     my $i = 0;
 
     for (split "\n", $boxes[1]) {
-	#print "Line $i is: $_\n";
 	if ($i == $pc) {
 	    $stack_dat->insert('end', $_."\n", 'highlighted');
 	} else {
-	    $stack_dat->insert('end', $_."\n");
+	    my ($line) = ($_ =~ /(\d+: [a-zA-Z0-9:=\-\*\+\/\, ]+)/);
+	    $stack_dat->insert('end', "$line\n");
+
 	}
 	$i++;
     }
