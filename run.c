@@ -82,7 +82,7 @@ int _run(struct ami_machine* m, int count)
                 fgets(str, 20, stdin);
                 mem_write(m, addr1, atoi(str));
             }
-            printf("READI, mem[%i] <- %i\n", addr1, atoi(str));
+            printf("READI, mem[%i] <- %i\n", addr1, m->mem[addr1].data);
         } else {
             raise(m, "Non address destination for READI");
         }

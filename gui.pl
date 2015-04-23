@@ -140,7 +140,8 @@ sub input{
 	my $message = $input_entry->get();
 	print $message;
 	$io_box->insert('end', "$message\n");
-	$shm->write("i$message\0", 0, length $message + 2);
+	$message = "i$message\0";
+	$shm->write($message, 0, length $message);
 	$wait_input = 0;
 	receive_update("input");
     }
