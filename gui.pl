@@ -190,8 +190,8 @@ sub receive_update{
 	}
 	$i++;
     }
-    
-    if ($boxes[2] =~ /^\>$/) {
+
+    if ($boxes[2] =~ /^\>/) {
 	$wait_input = 1;
     }
     $io_box->insert('end', $boxes[2]);
