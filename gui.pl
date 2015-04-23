@@ -12,7 +12,7 @@ use Time::HiRes qw(usleep);
 my $shm = IPC::SharedMem->new($ARGV[0], 256, S_IRWXU) || die $!;
 
 #Global Variables
-my $wait_input = 0;
+my $wait_input = 0;#flag to force the user to input something in the console
 
 # Main Window
 my $mw = new MainWindow;
@@ -85,11 +85,19 @@ $input_lab -> grid(-row=>3, -column=>1);
 $input_entry -> grid(-row=>3, -column=>2);
 $io_frm -> grid(-row=>2, -column=>5, -columnspan=>2);
 
-receive_update("");
+receive_update("initial");
 MainLoop;
 
 ## Functions
+
+#Most of the following functions depend on the state of $wait_input
+#in that many features are disabled if the program is waiting for the
+#user to enter a value
+
+
 sub step{
+#sends a 'step' command to the simulator with the number of instructions
+#specified in the $steps_entry widget (default 1)
     if ($wait_input != 1) {
 	my $steps = $steps_entry->get();
 
@@ -103,6 +111,7 @@ sub step{
 }
 
 sub continue{
+#sends a 'continue' command to the simulator
     if ($wait_input != 1) {
 	my $message = "continue\0";
 	$shm->write($message, 0, length $message);
@@ -111,6 +120,7 @@ sub continue{
 }
 
 sub quit{
+#sends a 'quit' command to the simulator and immediately exits
     if ($wait_input != 1) {
 	my $message = "quit\0";
 	$shm->write($message, 0, length $message);
@@ -119,27 +129,44 @@ sub quit{
 }
 
 sub reset{
-    #todo: send garbage before resetting
-    #so that you can reset without sending input
-    if ($wait_input != 1) {
-	my $message = "reset\0";
+#sends a 'reset' command to the simulator
+    my $message;
+
+    #if we're waiting for input, send garbage to the simulator
+    #to first unfreeze it, then reset.
+    if ($wait_input == 1) {
+	$message = "i0\0";
 	$shm->write($message, 0, length $message);
-	receive_update("reset");
+	$wait_input = 0;
+	receive_update("fake input");
     }
+
+    $message = "reset\0";
+    $shm->write($message, 0, length $message);
+    receive_update("reset");
 }
 
 sub input{
+#sends the input from the $input_entry widget to the simulator
+#and inserts it into the console output box to simulate the console
+#resets the $wait_input flag since we have now sent input
     if ($wait_input == 1) {
 	my $message = $input_entry->get();
-	$io_box->insert('end', "$message\n");
-	$message = "i$message\0";
-	$shm->write($message, 0, length $message);
-	$wait_input = 0;
-	receive_update("input");
+	if (length $message > 0 && $message =~ /^\d+$/) {
+	    $io_box->insert('end', "$message\n");
+	    $message = "i$message\0";
+	    $shm->write($message, 0, length $message);
+	    $wait_input = 0;
+	    receive_update("input");
+	} else {
+	    $io_box->insert('end', " Enter a valid number\n>");
+	}
     }
 }
 
 sub receive_update{
+#waits for, and then processes, data from the simulator
+
     my $prev_command = shift;
     my $message = "";
     my $combined = "";
@@ -167,21 +194,34 @@ sub receive_update{
 	$combined .= $message;
 	$shm->write("\0", 0, 1);
 	
+	#an 'e' indicates that this is the end of the data
 	if ($shm->read(1,1) eq "e") {
 	    last;
 	}
     }
 
+    #data is separated into 3 groupd (1 for each data box)
+    #by '~' characters
     my @boxes = split "~", $combined;
 
+    #store reg box scroll position, delete data
+    #reinsert new data, and rescroll box
+    my ($first, $last) = $reg_srl_y->get();
     $reg_dat->delete('1.0', 'end');
     $reg_dat->Insert($boxes[0]);
+    $reg_dat->yviewMoveto($first);
 
-    my ($first, $last) = $stack_srl_y->get();
-    print "First: $first, Last: $last, Midpoint: ".($first + ($last - $first) / 2)."\n";
-
+    #store stack box scroll position, delete data
+    ($first, $last) = $stack_srl_y->get();
     $stack_dat->delete('1.0', 'end');
+
+    #get the program counter from the register box for use
+    #in highlighting the next instruction
     my ($pc) = ($boxes[0] =~ /^pc: (\d+)/);
+
+    #loop through all instruction lines, strip out unsupported characters
+    #and insert the line into the stack data box. if it is the
+    #next instruction, highlight it
     my $i = 0;
 
     for (split "\n", $boxes[1]) {
@@ -194,11 +234,17 @@ sub receive_update{
 	$i++;
     }
 
+    #rescroll the stack data box
     $stack_dat->yviewMoveto($first);
 
+    #if we've received an input indicator, we must wait
+    #until a value has been inputed before doing other actions
     if ($boxes[2] =~ /^\>/) {
 	$wait_input = 1;
     }
+    
+    #insert either a '>' input indicator or an
+    #'outputed' number in the for '-> NUM'
     $io_box->insert('end', $boxes[2]);
 }
 
