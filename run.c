@@ -41,19 +41,25 @@ int _run(struct ami_machine* m, int count)
 
         op = m->mem[m->PC].op;
         entry = m->mem[m->PC];
-        printf("%s\n", entry.instruction);
+
+        if (!m->opt_graphical) {
+            printf("%s\n", entry.instruction);
+        }
 
         switch(op) {
         case HALT:
-            printf("HALT\n");
+            if (!m->opt_graphical) {
+                printf("HALT\n");
+            }
             m->halted = 1;
             break;
         case WRITE:
             if (m->opt_graphical) {
                 m->console_io_value  = arg_get_value(m, entry.arguments[0]);
                 m->console_io_status = 2;
+            } else {
+                printf("WRITE -> %i\n", arg_get_value(m, entry.arguments[0]));
             }
-            printf("WRITE -> %i\n", arg_get_value(m, entry.arguments[0]));
             break;
         case READB:
             if (entry.argc == 1) {
@@ -67,8 +73,8 @@ int _run(struct ami_machine* m, int count)
                 } else {
                     fgets(str, 20, stdin);
                     mem_write(m, addr1, atoi(str) != 0);
+                    printf("READB, mem[%i] <- %i\n", addr1, atoi(str) != 0);
                 }
-                printf("READB, mem[%i] <- %i\n", addr1, atoi(str) != 0);
             } else {
                 raise(m, "Non address destination for READB");
             }
@@ -85,8 +91,8 @@ int _run(struct ami_machine* m, int count)
                 } else {
                     fgets(str, 20, stdin);
                     mem_write(m, addr1, atoi(str));
+                    printf("READI, mem[%i] <- %i\n", addr1, m->mem[addr1].data);
                 }
-                printf("READI, mem[%i] <- %i\n", addr1, m->mem[addr1].data);
             } else {
                 raise(m, "Non address destination for READI");
             }
@@ -94,36 +100,50 @@ int _run(struct ami_machine* m, int count)
         case JUMP:
             addr1 = add_get_value(m, entry.arguments[0]);
             m->nPC = addr1;
-            printf("JUMP to %i\n", addr1);
+            if (!m->opt_graphical) {
+                printf("JUMP to %i\n", addr1);
+            }
             break;
         case JUMPIF:
             addr1 = add_get_value(m, entry.arguments[0]);
             if (arg_get_value(m, entry.arguments[1])) {
                 m->nPC = addr1;
-                printf("JUMPIF to %i, COND TRUE\n", addr1);
+                if (!m->opt_graphical) {
+                    printf("JUMPIF to %i, COND TRUE\n", addr1);
+                }
             } else {
-                printf("JUMPIF to %i, COND FALSE\n", addr1);
+                if (!m->opt_graphical) {
+                    printf("JUMPIF to %i, COND FALSE\n", addr1);
+                }
             }
             break;
         case JUMPNIF:
             addr1 = add_get_value(m, entry.arguments[0]);
             if (arg_get_value(m, entry.arguments[1]) == 0) {
                 m->nPC = addr1;
-                printf("JUMPNIF to %i, COND TRUE\n", addr1);
+                if (!m->opt_graphical) {
+                    printf("JUMPNIF to %i, COND TRUE\n", addr1);
+                }
             } else {
+                if (!m->opt_graphical) {
                 printf("JUMPNIF to %i, COND FALSE\n", addr1);
+                }
             }
             break;
         case MOVE:
             if (entry.arguments[0].type == REGISTER) {
                 m->R[entry.arguments[0].reg] = arg_get_value(m, entry.arguments[1]);
-                printf("MOVE, r%i <- %i\n", 
-                       entry.arguments[0].reg, arg_get_value(m, entry.arguments[1]));
+                if (!m->opt_graphical) {
+                    printf("MOVE, r%i <- %i\n", 
+                           entry.arguments[0].reg, arg_get_value(m, entry.arguments[1]));
+                }
             } else if (entry.arguments[0].type == ADDRESS) {
                 addr1 = mem_get_addr(m, entry.arguments[0]);
                 mem_write(m, addr1,  arg_get_value(m, entry.arguments[1]));
-                printf("MOVE, mem[%i] <- %i\n",
-                       addr1, arg_get_value(m, entry.arguments[1]));
+                if (!m->opt_graphical) {
+                    printf("MOVE, mem[%i] <- %i\n",
+                           addr1, arg_get_value(m, entry.arguments[1]));
+                }
             } else {
                 raise(m, "Inappropriate destination for move");
             }
@@ -132,8 +152,10 @@ int _run(struct ami_machine* m, int count)
             if (entry.argc == 2) {
                 addr1 = mem_get_addr(m, entry.arguments[1]);
                 m->R[entry.arguments[0].reg] = mem_read(m, addr1);
-                printf("LOAD, r%i <- %i\n", 
-                       entry.arguments[0].reg, mem_read(m, addr1));
+                if (!m->opt_graphical) {
+                    printf("LOAD, r%i <- %i\n", 
+                           entry.arguments[0].reg, mem_read(m, addr1));
+                }
             } else {
                 raise(m, "Inappropriate destination for load");
             }
@@ -142,8 +164,10 @@ int _run(struct ami_machine* m, int count)
             if (entry.argc == 2) {
                 addr1 = mem_get_addr(m, entry.arguments[0]);
                 mem_write(m, addr1, m->R[entry.arguments[1].reg]);
-                printf("STORE, mem[%i] <- %i\n", 
-                       addr1, m->R[entry.arguments[1].reg]);
+                if (!m->opt_graphical) {
+                    printf("STORE, mem[%i] <- %i\n", 
+                           addr1, m->R[entry.arguments[1].reg]);
+                }
             } else {
                 raise(m, "Inappropriate destination for store");
             }
@@ -152,16 +176,22 @@ int _run(struct ami_machine* m, int count)
             if (entry.arguments[1].type == NUMBER) {
                 if (entry.arguments[0].type == REGISTER) {
                     m->R[entry.arguments[0].reg] = entry.arguments[1].number;
-                    printf("IDM, r%i <- %i\n", entry.arguments[0].reg, entry.arguments[1].number);
+                    if (!m->opt_graphical) {
+                        printf("IDM, r%i <- %i\n", entry.arguments[0].reg, entry.arguments[1].number);
+                    }
                 } else if (entry.arguments[0].type == ADDRESS) {
                     addr1 = mem_get_addr(m, entry.arguments[0]);
                     mem_write(m, addr1, entry.arguments[1].number);
-                    printf("IDM, mem[%i] <- %i\n", addr1, entry.arguments[1].number);
+                    if (!m->opt_graphical) {
+                        printf("IDM, mem[%i] <- %i\n", addr1, entry.arguments[1].number);
+                    }
                 } else {
                     raise(m, "Inappropriate destination for immediate data move");
                 }
             } else {
-                printf("%i\n", entry.arguments[0].type);
+                if (!m->opt_graphical) {
+                    printf("%i\n", entry.arguments[0].type);
+                }
                 raise(m, "Inappropriate number for immediate data move");
             }
 
@@ -172,10 +202,14 @@ int _run(struct ami_machine* m, int count)
                 if (arg_get_value(m, entry.arguments[1]) ==
                     arg_get_value(m, entry.arguments[2])) {
                     m->R[addr1] = 1;
-                    printf("EQ, r%i <- true\n", addr1);
+                    if (!m->opt_graphical) {
+                        printf("EQ, r%i <- true\n", addr1);
+                    }
                 } else {
                     m->R[addr1] = 0;
-                    printf("EQ, r%i <- false\n", addr1);
+                    if (!m->opt_graphical) {
+                        printf("EQ, r%i <- false\n", addr1);
+                    }
                 }
             } else {
                 raise(m, "Non register argument in EQ instruction");
@@ -187,10 +221,14 @@ int _run(struct ami_machine* m, int count)
                 if (arg_get_value(m, entry.arguments[1]) ==
                     arg_get_value(m, entry.arguments[2])) {
                     m->R[addr1] = 1;
-                    printf("NEQ, r%i <- false\n", addr1);
+                    if (!m->opt_graphical) {
+                        printf("NEQ, r%i <- false\n", addr1);
+                    }
                 } else {
                     m->R[addr1] = 0;
-                    printf("NEQ, r%i <- true\n", addr1);
+                    if (!m->opt_graphical) {
+                        printf("NEQ, r%i <- true\n", addr1);
+                    }
                 }
             } else {
                 raise(m, "Non register argument in NEQ instruction");
@@ -202,10 +240,14 @@ int _run(struct ami_machine* m, int count)
                 if (arg_get_value(m, entry.arguments[1]) <
                     arg_get_value(m, entry.arguments[2])) {
                     m->R[addr1] = 1;
-                    printf("LT, r%i <- true\n", addr1);
+                    if (!m->opt_graphical) {
+                        printf("LT, r%i <- true\n", addr1);
+                    }
                 } else {
                     m->R[addr1] = 0;
-                    printf("LT, r%i <- false\n", addr1);
+                    if (!m->opt_graphical) {
+                        printf("LT, r%i <- false\n", addr1);
+                    }
                 }
             } else {
                 raise(m, "Non register argument in LT instruction");
@@ -217,10 +259,14 @@ int _run(struct ami_machine* m, int count)
                 if (arg_get_value(m, entry.arguments[1]) <=
                     arg_get_value(m, entry.arguments[2])) {
                     m->R[addr1] = 1;
-                    printf("LTE, r%i <- true\n", addr1);
+                    if (!m->opt_graphical) {
+                        printf("LTE, r%i <- true\n", addr1);
+                    }
                 } else {
                     m->R[addr1] = 0;
-                    printf("LTE, r%i <- false\n", addr1);
+                    if (!m->opt_graphical) {
+                        printf("LTE, r%i <- false\n", addr1);
+                    }
                 }
             } else {
                 raise(m, "Non register argument in LTE instruction");
@@ -233,20 +279,28 @@ int _run(struct ami_machine* m, int count)
                     if (arg_get_value(m, entry.arguments[1]) != 0
                         && arg_get_value(m, entry.arguments[2]) != 0) {
                         m->R[addr1] = 1;
-                        printf("AND, r%i <- true\n", addr1);
+                        if (!m->opt_graphical) {
+                            printf("AND, r%i <- true\n", addr1);
+                        }
                     } else {
                         m->R[addr1] = 0;
-                        printf("AND, r%i <- false\n", addr1);
+                        if (!m->opt_graphical) {
+                            printf("AND, r%i <- false\n", addr1);
+                        }
                     } 
                 } else if (entry.arguments[0].type == ADDRESS) {
                     addr1 = mem_get_addr(m, entry.arguments[0]);
                     if (arg_get_value(m, entry.arguments[1]) != 0
                         && arg_get_value(m, entry.arguments[2]) != 0) {
                         mem_write(m, addr1, 1);
-                        printf("AND, mem[%i] <- true\n", addr1);
+                        if (!m->opt_graphical) {
+                            printf("AND, mem[%i] <- true\n", addr1);
+                        }
                     } else {
                         mem_write(m, addr1, 0);
-                        printf("AND, mem[%i] <- false\n", addr1);
+                        if (!m->opt_graphical) {
+                            printf("AND, mem[%i] <- false\n", addr1);
+                        }
                     } 
                 } else {
                     raise(m, "Inappropriate destination for AND");
@@ -262,20 +316,28 @@ int _run(struct ami_machine* m, int count)
                     if (arg_get_value(m, entry.arguments[1]) != 0
                         || arg_get_value(m, entry.arguments[2]) != 0) {
                         m->R[addr1] = 1;
-                        printf("OR, r%i <- true\n", addr1);
+                        if (!m->opt_graphical) {
+                            printf("OR, r%i <- true\n", addr1);
+                        }
                     } else {
                         m->R[addr1] = 0;
-                        printf("OR, r%i <- false\n", addr1);
+                        if (!m->opt_graphical) {
+                            printf("OR, r%i <- false\n", addr1);
+                        }
                     }
                 } else if (entry.arguments[0].type == ADDRESS) {
                     addr1 = mem_get_addr(m, entry.arguments[0]);
                     if (arg_get_value(m, entry.arguments[1]) != 0
                         || arg_get_value(m, entry.arguments[2]) != 0) {
                         mem_write(m, addr1, 1);
-                        printf("OR, mem[%i] <- true\n", addr1);
+                        if (!m->opt_graphical) {
+                            printf("OR, mem[%i] <- true\n", addr1);
+                        }
                     } else {
                         mem_write(m, addr1, 0);
-                        printf("OR, mem[%i] <- false\n", addr1);
+                        if (!m->opt_graphical) {
+                            printf("OR, mem[%i] <- false\n", addr1);
+                        }
                     }
                 } else {
                     raise(m, "Inappropriate destination for OR");
@@ -290,19 +352,27 @@ int _run(struct ami_machine* m, int count)
                     addr1 = entry.arguments[0].reg;
                     if (arg_get_value(m, entry.arguments[1]) == 0) {
                         m->R[addr1] = 1;
-                        printf("NOT, r%i <- true\n", addr1);
+                        if (!m->opt_graphical) {
+                            printf("NOT, r%i <- true\n", addr1);
+                        }
                     } else {
                         m->R[addr1] = 0;
-                        printf("NOT, r%i <- false\n", addr1);
+                        if (!m->opt_graphical) {
+                            printf("NOT, r%i <- false\n", addr1);
+                        }
                     }
                 } else if (entry.arguments[0].type == ADDRESS) {
                     addr1 = mem_get_addr(m, entry.arguments[0]);
                     if (arg_get_value(m, entry.arguments[1]) == 0) {
                         mem_write(m, addr1, 1);
-                        printf("NOT, mem[%i] <- true\n", addr1);
+                        if (!m->opt_graphical) {
+                            printf("NOT, mem[%i] <- true\n", addr1);
+                        }
                     } else {
                         mem_write(m, addr1, 0);
-                        printf("NOT, mem[%i] <- false\n", addr1);
+                        if (!m->opt_graphical) {
+                            printf("NOT, mem[%i] <- false\n", addr1);
+                        }
                     }
                 } else {
                     raise(m, "Inappropriate destination for NOT");
@@ -317,12 +387,16 @@ int _run(struct ami_machine* m, int count)
                     addr1 = entry.arguments[0].reg;
                     m->R[addr1] = arg_get_value(m, entry.arguments[1]) 
                         + arg_get_value(m, entry.arguments[2]);
-                    printf("ADD, r%i <- %i\n", addr1, m->R[addr1]);
+                    if (!m->opt_graphical) {
+                        printf("ADD, r%i <- %i\n", addr1, m->R[addr1]);
+                    }
                 } else if (entry.arguments[0].type == ADDRESS) {
                     addr1 = mem_get_addr(m, entry.arguments[0]);
                     mem_write(m, addr1, arg_get_value(m, entry.arguments[1]) 
                               + arg_get_value(m, entry.arguments[2]));
-                    printf("ADD, mem[%i] <- %i\n", addr1, mem_read(m, addr1));
+                    if (!m->opt_graphical) {
+                        printf("ADD, mem[%i] <- %i\n", addr1, mem_read(m, addr1));
+                    }
                 } else {
                     raise(m, "Inappropriate destination for ADD");
                 }
@@ -336,12 +410,16 @@ int _run(struct ami_machine* m, int count)
                     addr1 = entry.arguments[0].reg;
                     m->R[addr1] = arg_get_value(m, entry.arguments[1]) 
                         - arg_get_value(m, entry.arguments[2]);
-                    printf("SUB, r%i <- %i\n", addr1, m->R[addr1]);
+                    if (!m->opt_graphical) {
+                        printf("SUB, r%i <- %i\n", addr1, m->R[addr1]);
+                    }
                 } else if (entry.arguments[0].type == ADDRESS) {
                     addr1 = mem_get_addr(m, entry.arguments[0]);
                     mem_write(m, addr1, arg_get_value(m, entry.arguments[1]) 
                               - arg_get_value(m, entry.arguments[2]));
-                    printf("SUB, mem[%i] <- %i\n", addr1, mem_read(m, addr1));
+                    if (!m->opt_graphical) {
+                        printf("SUB, mem[%i] <- %i\n", addr1, mem_read(m, addr1));
+                    }
                 } else {
                     raise(m, "Inappropriate destination for SUB");
                 }
@@ -355,12 +433,16 @@ int _run(struct ami_machine* m, int count)
                     addr1 = entry.arguments[0].reg;
                     m->R[addr1] = arg_get_value(m, entry.arguments[1]) 
                         * arg_get_value(m, entry.arguments[2]);
-                    printf("MULT, r%i <- %i\n", addr1, m->R[addr1]);
+                    if (!m->opt_graphical) {
+                        printf("MULT, r%i <- %i\n", addr1, m->R[addr1]);
+                    }
                 } else if (entry.arguments[0].type == ADDRESS) {
                     addr1 = mem_get_addr(m, entry.arguments[0]);
                     mem_write(m, addr1, arg_get_value(m, entry.arguments[1]) 
                               * arg_get_value(m, entry.arguments[2]));
-                    printf("MULT, mem[%i] <- %i\n", addr1, mem_read(m, addr1));
+                    if (!m->opt_graphical) {
+                        printf("MULT, mem[%i] <- %i\n", addr1, mem_read(m, addr1));
+                    }
                 } else {
                     raise(m, "Inappropriate destination for MULT");
                 }
@@ -378,13 +460,17 @@ int _run(struct ami_machine* m, int count)
 	
                         m->R[addr1] = arg_get_value(m, entry.arguments[1]) 
                             / arg_get_value(m, entry.arguments[2]);
-                        printf("DIV, r%i <- %i\n", addr1, m->R[addr1]);
+                        if (!m->opt_graphical) {
+                            printf("DIV, r%i <- %i\n", addr1, m->R[addr1]);
+                        }
                     } else if (entry.arguments[0].type == ADDRESS) {
                         addr1 = mem_get_addr(m, entry.arguments[0]);
 	
                         mem_write(m, addr1, arg_get_value(m, entry.arguments[1]) 
                                   / arg_get_value(m, entry.arguments[2]));
-                        printf("DIV, mem[%i] <- %i\n", addr1, mem_read(m, addr1));
+                        if (!m->opt_graphical) {
+                            printf("DIV, mem[%i] <- %i\n", addr1, mem_read(m, addr1));
+                        }
                     } else {
                         raise(m, "Inappropriate destination for DIV");
                     }
@@ -398,11 +484,15 @@ int _run(struct ami_machine* m, int count)
                 if (entry.arguments[0].type == REGISTER) {
                     addr1 = entry.arguments[0].reg;
                     m->R[addr1] = -1 * arg_get_value(m, entry.arguments[1]);
-                    printf("NEG, r%i <- %i\n", addr1, m->R[addr1]);
+                    if (!m->opt_graphical) {
+                        printf("NEG, r%i <- %i\n", addr1, m->R[addr1]);
+                    }
                 } else if (entry.arguments[0].type == ADDRESS) {
                     addr1 = mem_get_addr(m, entry.arguments[0]);
                     mem_write(m, addr1, -1 * arg_get_value(m, entry.arguments[1]));
-                    printf("NEG, mem[%i] <- %i\n", addr1, mem_read(m, addr1));
+                    if (!m->opt_graphical) {
+                        printf("NEG, mem[%i] <- %i\n", addr1, mem_read(m, addr1));
+                    }
                 } else {
                     raise(m, "Inappropriate destination for NEG");
                 }
@@ -431,7 +521,7 @@ int run(struct ami_machine* m, int count)
 
     if (ret == -RUN_BREAKPOINT) {
         skip_breakpoint();
-    } else if (ret == -RUN_HALTED) {
+    } else if (ret == -RUN_HALTED && !m->opt_graphical) {
         printf("Program is halted\n");
     }
 

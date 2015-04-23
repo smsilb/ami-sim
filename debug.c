@@ -126,7 +126,6 @@ void readcmd(struct ami_machine *m) {
 
     line = (char *) malloc(buffered);
     strcpy(line, buffer);
-    printf("> %s\n", line);
 
     int i;
     s = m->shm;

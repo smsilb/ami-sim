@@ -91,7 +91,6 @@ MainLoop;
 ## Functions
 sub step{
     if ($wait_input != 1) {
-	print "Stepping\n";
 	my $steps = $steps_entry->get();
 
 	if ($steps eq "") {
