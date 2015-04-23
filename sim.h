@@ -66,7 +66,7 @@ struct stack_entry {
 
 #define MAX_SEGMENTS 16
 #define MAX_REGISTERS 100
-#define STACK_SIZE 128
+#define STACK_SIZE 256
 
 
 struct breakpoint {

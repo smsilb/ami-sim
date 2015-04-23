@@ -177,6 +177,9 @@ sub receive_update{
     $reg_dat->delete('1.0', 'end');
     $reg_dat->Insert($boxes[0]);
 
+    my ($first, $last) = $stack_srl_y->get();
+    print "First: $first, Last: $last, Midpoint: ".($first + ($last - $first) / 2)."\n";
+
     $stack_dat->delete('1.0', 'end');
     my ($pc) = ($boxes[0] =~ /^pc: (\d+)/);
     my $i = 0;
@@ -190,6 +193,8 @@ sub receive_update{
 	}
 	$i++;
     }
+
+    $stack_dat->yviewMoveto($first);
 
     if ($boxes[2] =~ /^\>/) {
 	$wait_input = 1;
