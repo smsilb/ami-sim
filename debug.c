@@ -19,6 +19,8 @@
 #endif
 
 #include "sim.h"
+#include <sys/shm.h>
+#include <sys/ipc.h>
 
 #define MAX_ARGS 5
 #define MAX_ARGLEN 30
@@ -185,6 +187,19 @@ void update_gui(struct ami_machine *m) {
   char *s;
   char buffer[buffer_size];
 
+  shmdt(m->shm);
+
+  int shmid;
+  if ((shmid = shmget((key_t) 1234, 256, IPC_CREAT | 0666)) < 0) {
+    perror("Could not initialize GUI\n");
+    exit(1);
+  }
+
+  if ((m->shm = shmat(shmid, NULL, 0)) == (char *) -1) {
+    perror("Could not initialize GUI\n");
+    exit(1);
+  }
+  
   s = m->shm;
   for (i = 0; i < 256; i++) {
     *s = '\0';

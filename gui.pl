@@ -196,6 +196,7 @@ sub receive_update{
     my $i = 0;
 
     for (split "\n", $boxes[1]) {
+	#print "Line $i is: $_\n";
 	if ($i == $pc) {
 	    $stack_dat->insert('end', $_."\n", 'highlighted');
 	} else {

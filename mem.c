@@ -71,7 +71,7 @@ char * read_stack_entry(struct ami_machine *m, int addr) {
   } else {
     char buffer[80];
     sprintf(buffer, "%i: %i", addr, m->mem[addr].data);
-    memValue = (char*) malloc(sizeof(buffer) + 1);
+    memValue = (char*) malloc(strlen(buffer) + 1);
     strcpy(memValue, buffer);
   }
 
