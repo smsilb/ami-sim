@@ -66,7 +66,7 @@ struct stack_entry {
 
 #define MAX_SEGMENTS 16
 #define MAX_REGISTERS 100
-#define STACK_SIZE 124
+#define STACK_SIZE 128
 
 
 struct breakpoint {
@@ -78,30 +78,32 @@ struct breakpoint {
 
 struct ami_machine {
     /* debug options */
-    int opt_printstack;
-    int opt_dumpreg;
-    int opt_graphical;
-    char *filename;
-    int opt_ac;
-    char **opt_av;
-    struct breakpoint *breakpoints;
+    int opt_printstack;//for 'print' command with stack
+    int opt_dumpreg;//for 'print' command with registers
+    int opt_graphical;//to select graphical or text mode
+    char *filename;//holds the name of the input file
+    int opt_ac;//command line argument count
+    char **opt_av;//command line arguments
+    struct breakpoint *breakpoints;//list of breakpoints
 
     /* gui management */
-    char *shm;
-    int console_io_status;
-    int console_io_value;
+    char *shm;//pointer to shared memory
+    int console_io_status;//holds status code for GUI console
+    int console_io_value;//holds value to pass between sim and
+                         //GUI console
 
     /* run state */
-    int halted;
+    int halted;//halts the simulator after executing a 'halt' command
 
     /* memory state */
-    struct stack_entry mem[STACK_SIZE];
-    unsigned int slots_used;
+    struct stack_entry mem[STACK_SIZE];//virtual memory for 
+                                       //instructions & data
+    unsigned int slots_used;//# of mem slots that are instructions
 
     /* CPU registers */
-    int R[MAX_REGISTERS];
-    unsigned int PC, nPC;
-    int reg_count;
+    int R[MAX_REGISTERS];//virtual registers
+    unsigned int PC, nPC;//program counter, next program counter
+    int reg_count;//count of registers (for printing)
 };
 
 

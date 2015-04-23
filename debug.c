@@ -187,26 +187,13 @@ void update_gui(struct ami_machine *m) {
   char *s;
   char buffer[buffer_size];
 
-  shmdt(m->shm);
-
-  int shmid;
-  if ((shmid = shmget((key_t) 1234, 256, IPC_CREAT | 0666)) < 0) {
-    perror("Could not initialize GUI\n");
-    exit(1);
-  }
-
-  if ((m->shm = shmat(shmid, NULL, 0)) == (char *) -1) {
-    perror("Could not initialize GUI\n");
-    exit(1);
-  }
-  
   s = m->shm;
   for (i = 0; i < 256; i++) {
     *s = '\0';
     s++;
   }
 
-  //build string to send
+  //build register string to send
   sprintf(buffer, "pc: %i\nb: %i\n", m->PC, m->R[0]);
   for (i = 1; i < m->reg_count; i++) {
     if (strlen(buffer) + 5 > 255) {
@@ -220,6 +207,7 @@ void update_gui(struct ami_machine *m) {
   //add delimiter to end of buffer
   sprintf(buffer, "%s~", buffer);
 
+  //add stack info to string to send
   for (i = 0; i < STACK_SIZE; i++) {
     char *data = read_stack_entry(m, i);
     if (strlen(buffer) + strlen(data) > 253) {
@@ -231,6 +219,8 @@ void update_gui(struct ami_machine *m) {
     free(data);
   }
 
+  //conditionally add console io to string to send
+  //(with another delimiter)
   if (m->console_io_status == 1) {
       if (strlen(buffer) + 2 > 253) {
           send_string_to_gui(m, buffer);
@@ -246,41 +236,18 @@ void update_gui(struct ami_machine *m) {
 
   send_string_to_gui(m, buffer);
 
-  //set 'end' flag
+  //set 'end' flag to inform gui no more data is coming
   *m->shm = 'r';
   *(m->shm + 1) = 'e';
 
   //if we were waiting for input, capture the input sent from the gui
   if (m->console_io_status == 1) {
       while (*m->shm != 'i') {
-          //printf("Waiting for input\n");
           nanosleep(100000);
       }
       m->console_io_value = atoi(m->shm + 1);
       m->console_io_status = 0;
   }
-
-  /*for (i = 1; i < m->reg_count; i++) {
-    if (strlen(buffer) + 5 > 256) {
-      strcpy(m->shm, buffer);
-      while (*m->shm != '*') {
-	nanosleep(100000, &sleep_time);
-      }
-      sprintf(buffer, "%i: %i\n", i, m->R[i]);
-    } else {
-      sprintf(buffer, "%s%i: %i\n", buffer, i, m->R[i]);
-    }
-  }
-  strcpy(m->shm, buffer);
-  /*  while (*m->shm != '*') {
-    nanosleep(100000, &sleep_time);
-  }
-  strcpy(m->shm, "end");*/
-
-  //printf("Sent %s\n", m->shm);
-  /*  while (*m->shm != '*') {
-    nanosleep(100000, &sleep_time);
-    }*/
 
   *m->shm = '\0';
 }
