@@ -208,7 +208,7 @@ sub remove_breakpoint {
     splice(@breakpoints, $offset, 1); 
     list_breakpoints(); 
 
-    my $message = "delete $offset\0";
+    my $message = "delete ".($offset + 1)."\0";
     $shm->write($message, 0, length $message);
     receive_update("delete breakpoint");
 }
