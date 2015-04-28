@@ -62,8 +62,13 @@ my $io_box = $io_frm -> Text(-height=>28, -width=>20, -takefocus=>1);
 
 $input_entry->bind('<Return>', \&input);
 
-#breakpoints
+#Toplevel widget for managing breakpoints
+#this is created but immediately withdrawn to save time by
+#hiding/displaying an existing widget rather than recreating one each time
 my $breakpoint_tl = $mw->Toplevel();
+
+#the window delete protocol is overridden to prevent the user from deleting
+#the Toplevel and thereby preventing the widget from being redrawn
 $breakpoint_tl->protocol('WM_DELETE_WINDOW' => sub {$breakpoint_tl->withdraw();});
 $breakpoint_tl->withdraw();
 $breakpoint_tl->title("Breakpoints");
@@ -189,31 +194,49 @@ sub input{
 }
 
 sub toggle_breakpoints{
-    $breakpoint_tl->deiconify();
-    $breakpoint_tl->raise();
-    list_breakpoints();
+#redisplays the hidden breakpoints Toplevel widget
+#and redraws the list of breakpoints
+    if ($wait_input != 1) {
+	$breakpoint_tl->deiconify();
+	$breakpoint_tl->raise();
+	list_breakpoints();
+    }
 }
 
 sub list_breakpoints{
+#Creates a widget for each existing breakpoint
+
+    #the existing frame must be destroyed so that deleted breakpoints will
+    #disappear
     $bp_list_frame->destroy();
     $bp_list_frame = $breakpoint_tl->Frame(-borderwidth=>2, -relief=>"groove", -width=>200, -height=>300)->grid(-row=>2, -column=>2);
-   for (my $i = 0; $i < scalar @breakpoints; $i++) {
+
+    #Creates a label and remove button for each active breakpoint
+    for (my $i = 0; $i < scalar @breakpoints; $i++) {
 	$bp_list_frame->Label(-text=>($i + 1).": $breakpoints[$i]")->grid(-row=>$i, -column=>1);
 	$bp_list_frame->Button(-text=>"Remove", -command=>[\&remove_breakpoint, $i])->grid(-row=>$i, -column=>2);
     };
 }
 
 sub remove_breakpoint {
+#Called when a remove breakpoint button is clicked. Removes that
+#breakpoint from the @breakpoints array, and sends the 
+#simulator a message to delete the actual breakpoint
+
+    #splice out the breakpoint and redraw the updated list
     my $offset = shift;
     splice(@breakpoints, $offset, 1); 
     list_breakpoints(); 
 
+    #then send the message to delete this breakpoint
     my $message = "delete ".($offset + 1)."\0";
     $shm->write($message, 0, length $message);
     receive_update("delete breakpoint");
 }
 
 sub add_breakpoint{
+#Adds a new breakpoint to the @breakpoints array and sends the
+#simulator a message to create a breakpoint at that address
     my $breakpoint = $bp_entry->get();
     $bp_entry->delete(0, 'end');
 
