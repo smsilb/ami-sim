@@ -231,6 +231,10 @@ void update_gui(struct ami_machine *m) {
       send_string_to_gui(m, buffer);
       sprintf(buffer, "~-> %i", m->console_io_value);
       m->console_io_status = 0;
+  } else if (m->console_io_status == 3) {
+      send_string_to_gui(m, buffer);
+      sprintf(buffer, "~Program is halted\n");
+      m->console_io_status = 0;
   }
 
   send_string_to_gui(m, buffer);

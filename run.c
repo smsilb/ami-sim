@@ -521,8 +521,12 @@ int run(struct ami_machine* m, int count)
 
     if (ret == -RUN_BREAKPOINT) {
         skip_breakpoint();
-    } else if (ret == -RUN_HALTED && !m->opt_graphical) {
-        printf("Program is halted\n");
+    } else if (ret == -RUN_HALTED) {
+        if (m->opt_graphical) {
+            m->console_io_status = 3;
+        } else {
+            printf("Program is halted\n");
+        }
     }
 
     return ret;
