@@ -13,9 +13,11 @@ my $shm = IPC::SharedMem->new($ARGV[0], 256, S_IRWXU) || die $!;
 
 #Global Variables
 my $wait_input = 0;#flag to force the user to input something in the console
+my @breakpoints = ();
 
 # Main Window
 my $mw = new MainWindow;
+$mw->title("ABSTRACT INSTRUCTION SIMULATOR");
 $mw->geometry('700x500-200+200');
 
 #GUI Building Area
@@ -34,6 +36,7 @@ my $steps_entry = $cntrl_frm -> Entry(-width=>3);
 my $quit = $cntrl_frm -> Button(-text=>"Quit", -command=>\&quit);
 my $reset = $cntrl_frm -> Button(-text=>"Reset", -command=>\&reset);
 my $continue = $cntrl_frm -> Button(-text=>"Continue", -command=>\&continue);
+my $breakpoint_toggle = $cntrl_frm -> Button(-text=>"Breakpoints", -command=>\&toggle_breakpoints);
 
 #register display
 my $reg_lab = $reg_frm -> Label(-text=>"Registers:");
@@ -59,31 +62,52 @@ my $io_box = $io_frm -> Text(-height=>28, -width=>20, -takefocus=>1);
 
 $input_entry->bind('<Return>', \&input);
 
+#breakpoints
+my $breakpoint_tl = $mw->Toplevel();
+$breakpoint_tl->protocol('WM_DELETE_WINDOW' => sub {$breakpoint_tl->withdraw();});
+$breakpoint_tl->withdraw();
+$breakpoint_tl->title("Breakpoints");
+$breakpoint_tl->Label(-text=>"Breakpoints")->grid(-row=>1, -column=>2);
+my $bp_list_frame = $breakpoint_tl->Frame(-borderwidth=>2, -relief=>"groove", -width=>200, -height=>300)->grid(-row=>2, -column=>2);
+$breakpoint_tl->Label(-text=>"Add a breakpoint:")->grid(-row=>3, -column=>1);
+my $bp_entry = $breakpoint_tl->Entry()->grid(-row=>3, -column=>2);
+$breakpoint_tl->Button(-text=>"Add breakpoint", -command=>\&add_breakpoint)->grid(-row=>3, -column=>3);
+
 #Geometry Management
-$step -> grid(-row=>1,-column=>1);
+my ($columns, $rows) = $mw->gridSize();
+for (my $i = 0; $i < $columns; $i++) {
+    $mw -> gridColumnconfigure($i, -weight=>1);
+}
+for (my $i = 0; $i < $rows; $i++) {
+    $mw -> gridRowconfigure($i, -weight=>1);
+};
+$mw -> gridColumnconfigure(1, -weight=> 2);
+
+$breakpoint_toggle -> grid(-row=>1, -column=>1);
+$step -> grid(-row=>1,-column=>2);
 $steps_lbl -> grid(-row=>2, -column=>1);
 $steps_entry -> grid(-row=>2, -column=>2);
-$continue -> grid(-row=>1, -column=>2);
-$reset -> grid(-row=>1, -column=>3);
-$quit -> grid(-row=>1, -column=>4);
-$cntrl_frm -> grid(-row=>1,-column=>1,-columnspan=>7);
+$continue -> grid(-row=>1, -column=>3);
+$reset -> grid(-row=>1, -column=>4);
+$quit -> grid(-row=>1, -column=>5);
+$cntrl_frm -> grid(-row=>1,-column=>1,-columnspan=>7, -sticky=>"nsew");
 
-$reg_lab -> grid(-row=>1, -column=>1);
-$reg_dat -> grid(-row=>2, -column=>1);
+$reg_lab -> grid(-row=>1, -column=>1, -sticky=>"nsew");
+$reg_dat -> grid(-row=>2, -column=>1, -sticky=>"nsew");
 $reg_srl_y -> grid(-row=>2, -column=>2, -sticky=>"ns");
-$reg_frm -> grid(-row=>2, -column=>1,-columnspan=>2);
+$reg_frm -> grid(-row=>2, -column=>1,-columnspan=>2, -sticky=>"nsew");
 
 
 $stack_lab -> grid(-row=>1, -column=>1);
-$stack_dat -> grid(-row=>2, -column=>1);
+$stack_dat -> grid(-row=>2, -column=>1, -sticky=>"nsew");
 $stack_srl_y -> grid(-row=>2, -column=>2, -sticky=>"ns");
-$stack_frm -> grid(-row=>2, -column=>3,-columnspan=>2);
+$stack_frm -> grid(-row=>2, -column=>3,-columnspan=>2, -sticky=>"nsew");
 
 $console_lab ->grid(-row=>1, -column=>1,-columnspan=>2);
-$io_box -> grid(-row=>2, -column=>1,-columnspan=>2);
+$io_box -> grid(-row=>2, -column=>1,-columnspan=>2, -sticky=>"nsew");
 $input_lab -> grid(-row=>3, -column=>1);
 $input_entry -> grid(-row=>3, -column=>2);
-$io_frm -> grid(-row=>2, -column=>5, -columnspan=>2);
+$io_frm -> grid(-row=>2, -column=>5, -columnspan=>2, -sticky=>"nsew");
 
 receive_update("initial");
 MainLoop;
@@ -101,7 +125,7 @@ sub step{
     if ($wait_input != 1) {
 	my $steps = $steps_entry->get();
 
-	if ($steps eq "") {
+	if ($steps eq "" || $steps =~ /[^\d]/) {
 	    $steps = "1"
 	}
 	my $message = "step ".$steps."\0";
@@ -161,6 +185,44 @@ sub input{
 	} else {
 	    $io_box->insert('end', " Enter a valid number\n>");
 	}
+    }
+}
+
+sub toggle_breakpoints{
+    $breakpoint_tl->deiconify();
+    $breakpoint_tl->raise();
+    list_breakpoints();
+}
+
+sub list_breakpoints{
+    $bp_list_frame->destroy();
+    $bp_list_frame = $breakpoint_tl->Frame(-borderwidth=>2, -relief=>"groove", -width=>200, -height=>300)->grid(-row=>2, -column=>2);
+   for (my $i = 0; $i < scalar @breakpoints; $i++) {
+	$bp_list_frame->Label(-text=>($i + 1).": $breakpoints[$i]")->grid(-row=>$i, -column=>1);
+	$bp_list_frame->Button(-text=>"Remove", -command=>[\&remove_breakpoint, $i])->grid(-row=>$i, -column=>2);
+    };
+}
+
+sub remove_breakpoint {
+    my $offset = shift;
+    splice(@breakpoints, $offset, 1); 
+    list_breakpoints(); 
+
+    my $message = "delete $offset\0";
+    $shm->write($message, 0, length $message);
+    receive_update("delete breakpoint");
+}
+
+sub add_breakpoint{
+    my $breakpoint = $bp_entry->get();
+    $bp_entry->delete(0, 'end');
+
+    if (length $breakpoint > 0 && $breakpoint =~ /^\d+$/) {
+	push @breakpoints, $breakpoint;
+	list_breakpoints();
+	my $message = "break $breakpoint\0";
+	$shm->write($message, 0, length $message);
+	receive_update("add breakpoint");
     }
 }
 
@@ -248,3 +310,9 @@ sub receive_update{
     $io_box->insert('end', $boxes[2]);
 }
 
+#make sure to send quit to simulator in case the user
+#exits by closing the window
+END {
+    my $message = "quit\0";
+    $shm->write($message, 0, length $message);
+}
