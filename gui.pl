@@ -66,18 +66,19 @@ $input_entry->bind('<Return>', [\&input, "console"]);
 #this is created but immediately withdrawn to save time by
 #hiding/displaying an existing widget rather than recreating one each time
 my $breakpoint_tl = $mw->Toplevel();
+$breakpoint_tl->minsize(400, 300);
 
 #the window delete protocol is overridden to prevent the user from deleting
 #the Toplevel and thereby preventing the widget from being redrawn
 $breakpoint_tl->protocol('WM_DELETE_WINDOW' => sub {$breakpoint_tl->withdraw();});
 $breakpoint_tl->withdraw();
 $breakpoint_tl->title("Breakpoints");
-$breakpoint_tl->Label(-text=>"Breakpoints")->grid(-row=>1, -column=>2);
-my $bp_list_frame = $breakpoint_tl->Frame(-borderwidth=>2, -relief=>"groove")->grid(-row=>2, -column=>2);
-$breakpoint_tl->Label(-text=>"Add a breakpoint:")->grid(-row=>3, -column=>1);
-my $bp_entry = $breakpoint_tl->Entry()->grid(-row=>3, -column=>2);
+$breakpoint_tl->Label(-text=>"Breakpoints")->pack;
+my $bp_list_frame = $breakpoint_tl->Frame(-borderwidth=>2, -relief=>"groove")->pack(-side=>'top', -fill=>'both', -expand=>1);
+$breakpoint_tl->Label(-text=>"Add a breakpoint:")->pack(-side=>'left', -anchor=>'s');
+my $bp_entry = $breakpoint_tl->Entry()->pack(-side=>'left', -anchor=>'s');
 $bp_entry->bind('<Return>', [\&input, "breakpoint"]);
-$breakpoint_tl->Button(-text=>"Add breakpoint", -command=>\&add_breakpoint)->grid(-row=>3, -column=>3);
+$breakpoint_tl->Button(-text=>"Add breakpoint", -command=>\&add_breakpoint)->pack(-side=>'left', -anchor=>'s');
 
 #Geometry Management
 $breakpoint_toggle -> grid(-row=>1, -column=>1);
@@ -87,7 +88,7 @@ $steps_entry -> grid(-row=>2, -column=>2);
 $continue -> grid(-row=>1, -column=>3);
 $reset -> grid(-row=>1, -column=>4);
 $quit -> grid(-row=>1, -column=>5);
-$cntrl_frm -> grid(-row=>1,-column=>1,-columnspan=>7, -sticky=>"nsew");
+$cntrl_frm->pack;
 
 $reg_lab->pack;
 $reg_srl_y->pack(-side=>'right', -fill=>'y', -expand=>1);
@@ -212,8 +213,10 @@ sub list_breakpoints{
 
     #Creates a label and remove button for each active breakpoint
     for (my $i = 0; $i < scalar @breakpoints; $i++) {
-	$bp_list_frame->Label(-text=>($i + 1).": $breakpoints[$i]")->grid(-row=>$i, -column=>1);
-	$bp_list_frame->Button(-text=>"Remove", -command=>[\&remove_breakpoint, $i])->grid(-row=>$i, -column=>2);
+	if (defined $breakpoints[$i]) {
+	    $bp_list_frame->Label(-text=>($i + 1).": $breakpoints[$i]")->grid(-row=>$i, -column=>1);
+	    $bp_list_frame->Button(-text=>"Remove", -command=>[\&remove_breakpoint, $i])->grid(-row=>$i, -column=>2);
+	}
     };
 }
 
@@ -224,7 +227,14 @@ sub remove_breakpoint {
 
     #splice out the breakpoint and redraw the updated list
     my $offset = shift;
-    splice(@breakpoints, $offset, 1); 
+    
+    #breakpoints keep the same index throughout their lifespan, 
+    #so removing a breakpoint via splice would make the indexing
+    #of all other breakpoints incorrect. instead just undef
+    #the breakpoint, and check if a breakpoint is defined before
+    #listing it
+    undef $breakpoints[$offset];
+
     list_breakpoints(); 
 
     #then send the message to delete this breakpoint
