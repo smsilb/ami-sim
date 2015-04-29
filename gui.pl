@@ -40,13 +40,13 @@ my $breakpoint_toggle = $cntrl_frm -> Button(-text=>"Breakpoints", -command=>\&t
 
 #register display
 my $reg_lab = $reg_frm -> Label(-text=>"Registers:");
-my $reg_dat = $reg_frm -> Text(-width=>20, -height=>30, -takefocus=>0);
+my $reg_dat = $reg_frm -> Text(-width=>30, -takefocus=>0);
 my $reg_srl_y = $reg_frm -> Scrollbar(-orient=>'v', -command=>[yview => $reg_dat]);
 $reg_dat -> configure(-yscrollcommand=>['set', $reg_srl_y]);
 
 #stack display
 my $stack_lab = $stack_frm -> Label(-text=>"Stack:");
-my $stack_dat = $stack_frm -> Text(-width=>30, -height=>30, -takefocus=>0);
+my $stack_dat = $stack_frm -> Text(-takefocus=>0);
 $stack_dat->tagConfigure('highlighted', 
 			 -foreground=>"white",
 			 -background=>"blue");
@@ -58,7 +58,7 @@ $stack_dat -> configure(-yscrollcommand=>['set', $stack_srl_y]);
 my $console_lab = $io_frm -> Label(-text=>"Console:");
 my $input_lab = $io_frm -> Label(-text=>"Input:");
 my $input_entry = $io_frm -> Entry();
-my $io_box = $io_frm -> Text(-height=>28, -width=>20, -takefocus=>1);
+my $io_box = $io_frm -> Text(-width=>28, -takefocus=>0);
 
 $input_entry->bind('<Return>', [\&input, "console"]);
 
@@ -80,15 +80,6 @@ $bp_entry->bind('<Return>', [\&input, "breakpoint"]);
 $breakpoint_tl->Button(-text=>"Add breakpoint", -command=>\&add_breakpoint)->grid(-row=>3, -column=>3);
 
 #Geometry Management
-my ($columns, $rows) = $mw->gridSize();
-for (my $i = 0; $i < $columns; $i++) {
-    $mw -> gridColumnconfigure($i, -weight=>1);
-}
-for (my $i = 0; $i < $rows; $i++) {
-    $mw -> gridRowconfigure($i, -weight=>1);
-};
-$mw -> gridColumnconfigure(1, -weight=> 2);
-
 $breakpoint_toggle -> grid(-row=>1, -column=>1);
 $step -> grid(-row=>1,-column=>2);
 $steps_lbl -> grid(-row=>2, -column=>1);
@@ -98,22 +89,23 @@ $reset -> grid(-row=>1, -column=>4);
 $quit -> grid(-row=>1, -column=>5);
 $cntrl_frm -> grid(-row=>1,-column=>1,-columnspan=>7, -sticky=>"nsew");
 
-$reg_lab -> grid(-row=>1, -column=>1, -sticky=>"nsew");
-$reg_dat -> grid(-row=>2, -column=>1, -sticky=>"nsew");
-$reg_srl_y -> grid(-row=>2, -column=>2, -sticky=>"ns");
-$reg_frm -> grid(-row=>2, -column=>1,-columnspan=>2, -sticky=>"nsew");
+$reg_lab->pack;
+$reg_srl_y->pack(-side=>'right', -fill=>'y', -expand=>1);
+$reg_dat->pack(-side=>'left', -fill=>'both', -expand=>1);
 
+$stack_lab->pack;
+$stack_srl_y->pack(-side=>'right', -fill=>'y', -expand=>1);
+$stack_dat->pack(-side=>'left', -fill=>'both', -expand=>1);
 
-$stack_lab -> grid(-row=>1, -column=>1);
-$stack_dat -> grid(-row=>2, -column=>1, -sticky=>"nsew");
-$stack_srl_y -> grid(-row=>2, -column=>2, -sticky=>"ns");
-$stack_frm -> grid(-row=>2, -column=>3,-columnspan=>2, -sticky=>"nsew");
+$console_lab->pack;
+$io_box->pack(-side=>'top', -fill=>'y', -expand=>1);
+$input_lab->pack(-side=>'left');
+$input_entry->pack(-side=>'left');
 
-$console_lab ->grid(-row=>1, -column=>1,-columnspan=>2);
-$io_box -> grid(-row=>2, -column=>1,-columnspan=>2, -sticky=>"nsew");
-$input_lab -> grid(-row=>3, -column=>1);
-$input_entry -> grid(-row=>3, -column=>2);
-$io_frm -> grid(-row=>2, -column=>5, -columnspan=>2, -sticky=>"nsew");
+$cntrl_frm->pack;
+$reg_frm->pack(-side=>'left', -fill=>'y');
+$io_frm->pack(-side=>'right', -fill=>'y');
+$stack_frm->pack(-side=>'right', -fill=>'y');
 
 receive_update("initial");
 MainLoop;
