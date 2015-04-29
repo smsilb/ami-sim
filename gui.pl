@@ -60,7 +60,7 @@ my $input_lab = $io_frm -> Label(-text=>"Input:");
 my $input_entry = $io_frm -> Entry();
 my $io_box = $io_frm -> Text(-height=>28, -width=>20, -takefocus=>1);
 
-$input_entry->bind('<Return>', \&input);
+$input_entry->bind('<Return>', [\&input, "console"]);
 
 #Toplevel widget for managing breakpoints
 #this is created but immediately withdrawn to save time by
@@ -73,9 +73,10 @@ $breakpoint_tl->protocol('WM_DELETE_WINDOW' => sub {$breakpoint_tl->withdraw();}
 $breakpoint_tl->withdraw();
 $breakpoint_tl->title("Breakpoints");
 $breakpoint_tl->Label(-text=>"Breakpoints")->grid(-row=>1, -column=>2);
-my $bp_list_frame = $breakpoint_tl->Frame(-borderwidth=>2, -relief=>"groove", -width=>200, -height=>300)->grid(-row=>2, -column=>2);
+my $bp_list_frame = $breakpoint_tl->Frame(-borderwidth=>2, -relief=>"groove")->grid(-row=>2, -column=>2);
 $breakpoint_tl->Label(-text=>"Add a breakpoint:")->grid(-row=>3, -column=>1);
 my $bp_entry = $breakpoint_tl->Entry()->grid(-row=>3, -column=>2);
+$bp_entry->bind('<Return>', [\&input, "breakpoint"]);
 $breakpoint_tl->Button(-text=>"Add breakpoint", -command=>\&add_breakpoint)->grid(-row=>3, -column=>3);
 
 #Geometry Management
@@ -179,17 +180,23 @@ sub input{
 #sends the input from the $input_entry widget to the simulator
 #and inserts it into the console output box to simulate the console
 #resets the $wait_input flag since we have now sent input
-    if ($wait_input == 1) {
-	my $message = $input_entry->get();
-	if (length $message > 0 && $message =~ /^\d+$/) {
-	    $io_box->insert('end', "$message\n");
-	    $message = "i$message\0";
-	    $shm->write($message, 0, length $message);
-	    $wait_input = 0;
-	    receive_update("input");
-	} else {
-	    $io_box->insert('end', " Enter a valid number\n>");
+    my $type = $_[1];
+     if ($type eq "console") {
+	if ($wait_input == 1) {
+	    my $message = $input_entry->get();
+	    if (length $message > 0 && $message =~ /^\d+$/) {
+		$io_box->insert('end', "$message\n");
+		$message = "i$message\0";
+		$shm->write($message, 0, length $message);
+		$wait_input = 0;
+		receive_update("input");
+	    } else {
+		$io_box->insert('end', " Enter a valid number\n>");
+	    }
 	}
+    } elsif ($type eq "breakpoint") {
+	print "adding breakpoint\n";
+	add_breakpoint();
     }
 }
 
@@ -209,7 +216,7 @@ sub list_breakpoints{
     #the existing frame must be destroyed so that deleted breakpoints will
     #disappear
     $bp_list_frame->destroy();
-    $bp_list_frame = $breakpoint_tl->Frame(-borderwidth=>2, -relief=>"groove", -width=>200, -height=>300)->grid(-row=>2, -column=>2);
+    $bp_list_frame = $breakpoint_tl->Frame(-borderwidth=>2, -relief=>"groove")->grid(-row=>2, -column=>2);
 
     #Creates a label and remove button for each active breakpoint
     for (my $i = 0; $i < scalar @breakpoints; $i++) {
