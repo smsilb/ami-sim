@@ -229,7 +229,7 @@ void update_gui(struct ami_machine *m) {
       }
   } else if (m->console_io_status == 2) {
       send_string_to_gui(m, buffer);
-      sprintf(buffer, "~-> %i", m->console_io_value);
+      sprintf(buffer, "~-> %i\n", m->console_io_value);
       m->console_io_status = 0;
   } else if (m->console_io_status == 3) {
       send_string_to_gui(m, buffer);

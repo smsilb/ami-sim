@@ -105,7 +105,7 @@ int _run(struct ami_machine* m, int count)
             break;
         case JUMP:
             addr1 = add_get_value(m, entry.arguments[0]);
-            if (addr1 > m->slots_used - 1) {
+            if (addr1 < m->slots_used) {
                 m->nPC = addr1;
                 if (!m->opt_graphical) {
                     printf("JUMP to %i\n", addr1);
@@ -533,7 +533,9 @@ int run(struct ami_machine* m, int count)
         skip_breakpoint();
     } else if (ret == -RUN_HALTED) {
         if (m->opt_graphical) {
-            m->console_io_status = 3;
+            if (m->console_io_status == 0) {
+                m->console_io_status = 3;
+            }
         } else {
             printf("Program is halted\n");
         }

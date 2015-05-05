@@ -182,13 +182,13 @@ sub input{
 		$message = "i$message\0";
 		$shm->write($message, 0, length $message);
 		$wait_input = 0;
+		$input_entry->delete(0, 'end');
 		receive_update("input");
 	    } else {
 		$io_box->insert('end', " Enter a valid number\n>");
 	    }
 	}
     } elsif ($type eq "breakpoint") {
-	print "adding breakpoint\n";
 	add_breakpoint();
     }
 }
