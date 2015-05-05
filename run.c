@@ -21,6 +21,12 @@ void raise(struct ami_machine *m, char *msg)
     } else {
         printf("AMI processor choked at illegal pc %d with message: %s\n", m->PC, msg);
     }
+
+    if (m->opt_graphical) {
+        *(m->shm + 2) = '\0';
+        *(m->shm + 1) = 'q';
+        *(m->shm) = 'r';
+    }
     exit(1);
 }
 
@@ -99,9 +105,13 @@ int _run(struct ami_machine* m, int count)
             break;
         case JUMP:
             addr1 = add_get_value(m, entry.arguments[0]);
-            m->nPC = addr1;
-            if (!m->opt_graphical) {
-                printf("JUMP to %i\n", addr1);
+            if (addr1 > m->slots_used - 1) {
+                m->nPC = addr1;
+                if (!m->opt_graphical) {
+                    printf("JUMP to %i\n", addr1);
+                }
+            } else {
+                raise(m, "Attempted to jump past instructions in stack");
             }
             break;
         case JUMPIF:

@@ -291,6 +291,8 @@ sub receive_update{
 	#an 'e' indicates that this is the end of the data
 	if ($shm->read(1,1) eq "e") {
 	    last;
+	} elsif ($shm->read(1,1) eq "q") {
+	    exit;
 	}
     }
 
