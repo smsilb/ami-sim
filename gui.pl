@@ -73,12 +73,12 @@ $breakpoint_tl->minsize(400, 300);
 $breakpoint_tl->protocol('WM_DELETE_WINDOW' => sub {$breakpoint_tl->withdraw();});
 $breakpoint_tl->withdraw();
 $breakpoint_tl->title("Breakpoints");
-$breakpoint_tl->Label(-text=>"Breakpoints")->pack;
-my $bp_list_frame = $breakpoint_tl->Frame(-borderwidth=>2, -relief=>"groove")->pack(-side=>'top', -fill=>'both', -expand=>1);
-$breakpoint_tl->Label(-text=>"Add a breakpoint:")->pack(-side=>'left', -anchor=>'s');
-my $bp_entry = $breakpoint_tl->Entry()->pack(-side=>'left', -anchor=>'s');
+$breakpoint_tl->Label(-text=>"Breakpoints")->grid(-row=>1, -column=>2);
+my $bp_list_frame = $breakpoint_tl->Frame(-borderwidth=>2, -relief=>"groove")->grid(-row=>2, -column=>2);
+$breakpoint_tl->Label(-text=>"Add a breakpoint:")->grid(-row=>3, -column=>1);
+my $bp_entry = $breakpoint_tl->Entry()->grid(-row=>3, -column=>2);
+$breakpoint_tl->Button(-text=>"Add breakpoint", -command=>\&add_breakpoint)->grid(-row=>3, -column=>3);
 $bp_entry->bind('<Return>', [\&input, "breakpoint"]);
-$breakpoint_tl->Button(-text=>"Add breakpoint", -command=>\&add_breakpoint)->pack(-side=>'left', -anchor=>'s');
 
 #Geometry Management
 $breakpoint_toggle -> grid(-row=>1, -column=>1);
@@ -144,11 +144,19 @@ sub continue{
 
 sub quit{
 #sends a 'quit' command to the simulator and immediately exits
-    if ($wait_input != 1) {
-	my $message = "quit\0";
+
+    my $message;
+
+    if ($wait_input == 1) {
+	$message = "i0\0";
 	$shm->write($message, 0, length $message);
-	exit;
+	$wait_input = 0;
+	receive_update("fake input");
     }
+
+   $message = "quit\0";
+    $shm->write($message, 0, length $message);
+    exit;
 }
 
 sub reset{
